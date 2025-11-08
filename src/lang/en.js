@@ -1,8 +1,6 @@
 export default {
-    // Footer
     footer: "© {{year}} Preventivo App. All rights reserved.",
 
-    // QuoteGeneralFields
     client: "Client",
     licensePlate: "License Plate",
     model: "Model",
@@ -11,12 +9,10 @@ export default {
     insurance: "Insurance",
     quoteDate: "Quote Date *",
 
-    // Header / Navigation
     appTitle: "Preventivo App",
     home: "Home",
     newQuote: "New Quote",
 
-    // HomePage
     homeTitle: "Home",
     existingQuotes: "Existing Quotes",
     noQuotes: "No quotes found.",
@@ -24,7 +20,6 @@ export default {
     noDate: "No Date",
     editPlaceholder: "Edit placeholder for:",
 
-    // QuoteItemsTable
     source: "Source",
     description: "Description",
     SR: "SR",
@@ -36,8 +31,7 @@ export default {
     total: "Total",
     total_labor_hours: "Total labor hours",
 
-
-    // ComplementaryItemsTable (NEW)
+    parts_total: "Total Parts",
     comp_voci: "Complementary Items",
     comp_carrozzeria: "Bodywork Labour",
     comp_meccanica: "Mechanical Labour",
@@ -48,4 +42,14 @@ export default {
     imposta: "VAT Amount",
     total_with_iva: "Total incl. VAT",
     final_total: "Final Quote Total",
+    total_no_vat: "Total before VAT",
+    total_vat_amount: "VAT Amount",
+
+    save_quote: "Auto Save Quote",
+    save_quote_manual: "Save Quote Manually",
+    update_quote: "Update Quote",
+    saving: "Saving...",
+    quote_saved: "Quote saved successfully!",
+    quote_save_error: "Error saving quote.",
+    quote_save_canceled: "Save canceled."
 };

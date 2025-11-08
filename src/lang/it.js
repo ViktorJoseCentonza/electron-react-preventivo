@@ -1,8 +1,6 @@
 export default {
-    // Footer
     footer: "© {{year}} Preventivo App. Tutti i diritti riservati.",
 
-    // QuoteGeneralFields
     client: "Cliente",
     licensePlate: "Targa",
     model: "Modello",
@@ -11,12 +9,10 @@ export default {
     insurance: "Assicurazione",
     quoteDate: "Data Preventivo *",
 
-    // Header / Navigation
     appTitle: "Preventivo App",
     home: "Home",
     newQuote: "Nuovo Preventivo",
 
-    // HomePage
     homeTitle: "Home",
     existingQuotes: "Preventivi esistenti",
     noQuotes: "Nessun preventivo trovato.",
@@ -24,7 +20,6 @@ export default {
     noDate: "Nessuna data",
     editPlaceholder: "Modifica placeholder per:",
 
-    // QuoteItemsTable
     source: "Citaz. fonte",
     description: "Descrizione",
     SR: "SR",
@@ -36,8 +31,7 @@ export default {
     total: "Totale",
     total_labor_hours: "Totale ore manodopera",
 
-
-    // ComplementaryItemsTable (NEW)
+    parts_total: "Totale Ricambi",
     comp_voci: "Voci complementari",
     comp_carrozzeria: "Manodopera Carrozzeria",
     comp_meccanica: "Manodopera Meccanica",
@@ -48,4 +42,14 @@ export default {
     imposta: "Imposta",
     total_with_iva: "Totale IVA inclusa",
     final_total: "Totale Preventivo",
+    total_no_vat: "Totale senza IVA",
+    total_vat_amount: "Totale IVA",
+
+    save_quote: "Salva Preventivo (Auto)",
+    save_quote_manual: "Salva Preventivo Manualmente",
+    update_quote: "Aggiorna Preventivo",
+    saving: "Salvataggio...",
+    quote_saved: "Preventivo salvato con successo!",
+    quote_save_error: "Errore durante il salvataggio del preventivo.",
+    quote_save_canceled: "Salvataggio annullato."
 };

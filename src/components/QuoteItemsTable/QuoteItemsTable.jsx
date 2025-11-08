@@ -1,68 +1,54 @@
 import Decimal from "decimal.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useQuote } from "../../contexts/QuoteContext";
 import FormField from "../FormField/FormField";
 import styles from "./QuoteItemsTable.module.css";
 
-export default function QuoteItemsTable({ items, setItems }) {
+export default function QuoteItemsTable() {
     const { labels } = useLanguage();
-
-    const initialRow = {
-        source: "",
-        description: "",
-        SR: "",
-        LA: "",
-        VE: "",
-        ME: "",
-        quantity: "",
-        price: "",
-        total: "",
-    };
-
-    const [rows, setRows] = useState(items?.length ? [...items] : [initialRow]);
-
-    const parseDecimal = (v) => {
-        if (!v) return new Decimal(0);
-        const norm = v.replace(",", ".").replace(/[^0-9.]/g, "");
-        return norm === "" || norm === "." ? new Decimal(0) : new Decimal(norm);
-    };
-
-    const formatDecimal = (v) => {
-        try {
-            return parseDecimal(v).toFixed(2).replace(".", ",");
-        } catch {
-            return "0,00";
-        }
-    };
-
-    const handleChange = (rowIndex, field, value) => {
-        const newRows = [...rows];
-
-        if (["source", "description"].includes(field)) newRows[rowIndex][field] = value;
-        else if (["SR", "LA", "VE", "ME", "price"].includes(field)) newRows[rowIndex][field] = value;
-        else if (field === "quantity") newRows[rowIndex][field] = value.replace(/\D/g, "");
-
-        const price = parseDecimal(newRows[rowIndex].price);
-        const qty = parseDecimal(newRows[rowIndex].quantity);
-        newRows[rowIndex].total = price.mul(qty).toFixed(2);
-
-        // Ensure last row is empty
-        const cleaned = newRows.filter((r) =>
-            Object.entries(r).some(([k, v]) => {
-                if (k === "total") return false;
-                if (["SR", "LA", "VE", "ME", "price", "quantity"].includes(k)) return parseDecimal(v).gt(0);
-                return v.trim() !== "";
-            })
-        );
-
-        if (!cleaned.length || cleaned[cleaned.length - 1] !== initialRow) cleaned.push({ ...initialRow });
-
-        setRows(cleaned);
-    };
+    const { items, setItems, setAutoTotals } = useQuote();
 
     const refs = useRef([]);
     refs.current = [];
     const addToRefs = (el) => el && refs.current.push(el);
+
+    const parseDecimal = (v) => {
+        if (v == null) return new Decimal(0);
+        if (typeof v === "number") return new Decimal(v);
+        const s = String(v).trim().replace(",", ".");
+        const norm = s.replace(/[^0-9.]/g, "");
+        return norm === "" || norm === "." ? new Decimal(0) : new Decimal(norm);
+    };
+
+    const formatDecimal = (v) => parseDecimal(v).toFixed(2).replace(".", ",");
+
+    const handleChange = (rowIndex, field, value) => {
+        const newItems = [...items];
+
+        // Create new row if doesn't exist
+        if (!newItems[rowIndex]) {
+            newItems[rowIndex] = { source: "", description: "", SR: "", LA: "", VE: "", ME: "", quantity: "", price: "", total: "" };
+        }
+
+        newItems[rowIndex] = { ...newItems[rowIndex], [field]: value };
+
+        // Calculate total (quantity * price)
+        const price = parseDecimal(newItems[rowIndex].price);
+        const qty = parseDecimal(newItems[rowIndex].quantity);
+        newItems[rowIndex].total = price.mul(qty).toFixed(2);
+
+        // Remove completely empty rows except last
+        const cleaned = newItems.filter((r, i) => {
+            if (i === newItems.length - 1) return true;
+            return Object.entries(r).some(([k, v]) => {
+                if (k === "total") return false;
+                return ["SR", "LA", "VE", "ME", "quantity", "price"].includes(k) ? parseDecimal(v).gt(0) : v.trim() !== "";
+            });
+        });
+
+        setItems(cleaned);
+    };
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
@@ -74,54 +60,47 @@ export default function QuoteItemsTable({ items, setItems }) {
         }
     };
 
+    // Update autoTotals based on items
+    useEffect(() => {
+        const totals = items.reduce(
+            (acc, r) => {
+                acc.SR = parseDecimal(acc.SR).plus(parseDecimal(r.SR)).toNumber();
+                acc.LA = parseDecimal(acc.LA).plus(parseDecimal(r.LA)).toNumber();
+                acc.VE = parseDecimal(acc.VE).plus(parseDecimal(r.VE)).toNumber();
+                acc.ME = parseDecimal(acc.ME).plus(parseDecimal(r.ME)).toNumber();
+                return acc;
+            },
+            { SR: 0, LA: 0, VE: 0, ME: 0 }
+        );
+
+        // VE counts twice: for bodywork and consumables
+        setAutoTotals({
+            bodywork: totals.SR + totals.LA + totals.VE,
+            mechanics: totals.ME,
+            consumables: totals.VE
+        });
+    }, [items, setAutoTotals]);
+
     const columns = [
         { key: "source", label: labels.source },
         { key: "description", label: labels.description },
-        { key: "SR", label: "SR" },
-        { key: "LA", label: "LA" },
-        { key: "VE", label: "VE" },
-        { key: "ME", label: "ME" },
+        { key: "SR", label: labels.SR },
+        { key: "LA", label: labels.LA },
+        { key: "VE", label: labels.VE },
+        { key: "ME", label: labels.ME },
         { key: "quantity", label: labels.quantity },
         { key: "price", label: labels.price },
-        { key: "total", label: labels.total },
+        { key: "total", label: labels.total }
     ];
 
-    const columnTotals = { SR: "0,00", LA: "0,00", VE: "0,00", ME: "0,00", price: "0,00", total: "0,00" };
-    rows.forEach((row) => {
-        ["SR", "LA", "VE", "ME", "price", "total"].forEach((f) => {
-            columnTotals[f] = parseDecimal(columnTotals[f])
-                .plus(parseDecimal(row[f]))
-                .toFixed(2)
-                .replace(".", ",");
-        });
-    });
-
-    useEffect(() => {
-        const filtered = rows
-            .filter((r) =>
-                Object.entries(r).some(([k, v]) => {
-                    if (k === "total") return false;
-                    if (["quantity", "price", "SR", "LA", "VE", "ME"].includes(k)) return parseDecimal(v).gt(0);
-                    return v.trim() !== "";
-                })
-            )
-            .map((r) => ({ ...r, total: parseDecimal(r.price).mul(parseDecimal(r.quantity)).toFixed(2) }));
-
-        setItems(filtered);
-    }, [rows, setItems]);
+    const renderRows = [...items, { source: "", description: "", SR: "", LA: "", VE: "", ME: "", quantity: "", price: "", total: "" }];
 
     return (
         <div className={styles.container}>
-            {rows.map((row, rowIndex) => (
-                <div
-                    key={rowIndex}
-                    className={`${styles.row} ${rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd}`}
-                >
-                    <div className={styles.rowHeader}>
-                        <span className={styles.rowNumber}>{rowIndex + 1}</span>
-                    </div>
-
-                    {columns.map((col) => {
+            {renderRows.map((row, rowIndex) => (
+                <div key={rowIndex} className={`${styles.row} ${rowIndex % 2 === 0 ? styles.rowEven : styles.rowOdd}`}>
+                    <div className={styles.rowHeader}><span className={styles.rowNumber}>{rowIndex + 1}</span></div>
+                    {columns.map(col => {
                         const isCurrency = ["price", "total"].includes(col.key);
                         const isReadOnly = col.key === "total";
                         const value = isReadOnly ? formatDecimal(row[col.key]) : row[col.key];
@@ -133,9 +112,9 @@ export default function QuoteItemsTable({ items, setItems }) {
                                     ref={addToRefs}
                                     label=""
                                     value={value}
-                                    onChange={(val) => handleChange(rowIndex, col.key, val)}
-                                    type={col.key === "quantity" ? "number" : "text"}
+                                    type={col.key === "quantity" || col.key === "price" ? "number" : "text"}
                                     symbol={isCurrency ? "€" : undefined}
+                                    onChange={val => handleChange(rowIndex, col.key, val)}
                                     onEnter={handleKeyDown}
                                     readOnly={isReadOnly}
                                 />
@@ -144,19 +123,6 @@ export default function QuoteItemsTable({ items, setItems }) {
                     })}
                 </div>
             ))}
-
-            {/* SUMMARY CARD */}
-            <div className={styles.summaryCard}>
-                <h4 className={styles.summaryTitle}>{labels.totals}</h4>
-                <div className={styles.summaryGrid}>
-                    <span>{labels.total_labor_hours}</span>
-                    {["SR", "LA", "VE", "ME"].map((f) => (
-                        <span key={f}>{f}: {columnTotals[f]}</span>
-                    ))}
-                    <span>{labels.price}: {columnTotals.price} €</span>
-                    <span>{labels.total}: {columnTotals.total} €</span>
-                </div>
-            </div>
         </div>
     );
 }

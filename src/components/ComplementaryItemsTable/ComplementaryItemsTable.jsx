@@ -1,207 +1,205 @@
 import Decimal from "decimal.js";
-import { useRef, useState } from "react";
+import { useMemo } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useQuote } from "../../contexts/QuoteContext";
 import FormField from "../FormField/FormField";
 import styles from "./ComplementaryItemsTable.module.css";
 
-export default function ComplementaryItemsTable({ values, onChange }) {
+export default function ComplementaryItemsTable() {
     const { labels } = useLanguage();
+    const { complementaryItems, updateComplementaryField, autoTotals, partsTotal } = useQuote();
 
-    const initialRow = () => ({
-        quantity: "",
-        price: "",
-        iva: "22",
-    });
-
-    const [rows, setRows] = useState(
-        values || {
-            voci: initialRow(),
-            carrozzeria: initialRow(),
-            meccanica: initialRow(),
-            consumo: initialRow(),
-            final: initialRow(), // final summary row
-        }
-    );
-
-    /* ------------------ Helpers ------------------ */
     const parseDecimal = (v) => {
-        if (!v) return new Decimal(0);
-        const norm = v.replace(",", ".").replace(/[^0-9.]/g, "");
+        if (v == null) return new Decimal(0);
+        if (typeof v === "number") return new Decimal(v);
+        const s = String(v).trim().replace(",", ".");
+        const norm = s.replace(/[^0-9.]/g, "");
         return norm === "" || norm === "." ? new Decimal(0) : new Decimal(norm);
     };
 
-    const formatDecimal = (v) => {
-        try {
-            return parseDecimal(v).toFixed(2).replace(".", ",");
-        } catch {
-            return "0,00";
-        }
-    };
+    const formatDecimal = (v) => parseDecimal(v).toFixed(2).replace(".", ",");
 
-    const handleChange = (group, field, value) => {
-        const newRows = { ...rows };
-        newRows[group][field] = value;
-        setRows(newRows);
-        onChange?.(newRows);
-    };
+    const defaultPrices = { parts: "0", bodywork: "40", mechanics: "40", consumables: "24" };
 
-    const handleBlurDecimal = (group, field) => {
-        const newRows = { ...rows };
-        newRows[group][field] = formatDecimal(newRows[group][field]);
-        setRows(newRows);
-        onChange?.(newRows);
+    const safeGroup = (group) => {
+        const autoQuantity =
+            group === "bodywork" ? autoTotals.bodywork :
+                group === "mechanics" ? autoTotals.mechanics :
+                    group === "consumables" ? autoTotals.consumables : undefined;
+
+        return {
+            quantity: autoQuantity ?? complementaryItems[group]?.quantity ?? "0",
+            price: complementaryItems[group]?.price ?? defaultPrices[group] ?? "0",
+            tax: complementaryItems[group]?.tax ?? "22",
+            readOnly: !!autoQuantity,
+        };
     };
 
     const calculate = (group) => {
-        const q = parseDecimal(rows[group].quantity);
-        const p = parseDecimal(rows[group].price);
-        const iva = parseDecimal(rows[group].iva);
-
+        const row = safeGroup(group);
+        const q = parseDecimal(row.quantity);
+        const p = parseDecimal(row.price);
+        const tax = parseDecimal(row.tax);
         const total = q.mul(p);
-        const imponibile = total;
-        const imposta = imponibile.mul(iva).div(100);
-        const totaleIvato = imponibile.plus(imposta);
-
+        const taxAmount = total.mul(tax).div(100);
+        const totalWithTax = total.plus(taxAmount);
         return {
             total: total.toFixed(2),
-            imponibile: imponibile.toFixed(2),
-            imposta: imposta.toFixed(2),
-            totaleIvato: totaleIvato.toFixed(2),
+            taxable: total.toFixed(2),
+            taxAmount: taxAmount.toFixed(2),
+            totalWithTax: totalWithTax.toFixed(2),
+            tax: row.tax
         };
     };
 
-    /* ------------------ Keyboard navigation ------------------ */
-    const refs = useRef([]);
-    refs.current = [];
-    const addToRefs = (el) => el && refs.current.push(el);
-    const handleKeyDown = (e, index) => {
-        if (e.key === "Tab" && !e.shiftKey) {
-            let next = index + 1;
-            while (refs.current[next] && refs.current[next].readOnly) next++;
-            if (refs.current[next]) {
-                e.preventDefault();
-                refs.current[next].focus();
-            }
-        }
-    };
+    const partsCalc = useMemo(() => {
+        const tax = complementaryItems.parts?.tax ?? "22";
+        const taxAmount = partsTotal * (tax / 100);
+        const totalWithTax = partsTotal + taxAmount;
+        return {
+            total: partsTotal.toFixed(2),
+            taxable: partsTotal.toFixed(2),
+            tax,
+            taxAmount: taxAmount.toFixed(2),
+            totalWithTax: totalWithTax.toFixed(2)
+        };
+    }, [partsTotal, complementaryItems.parts?.tax]);
 
-    /* ------------------ Groups ------------------ */
-    const groups = [
-        { key: "voci", label: labels.comp_voci },
-        { key: "carrozzeria", label: labels.comp_carrozzeria },
-        { key: "meccanica", label: labels.comp_meccanica },
-        { key: "consumo", label: labels.comp_consumo },
+    const groupMap = [
+        { key: "partsTotal", label: labels.parts_total },
+        { key: "parts", label: labels.comp_voci },
+        { key: "bodywork", label: labels.comp_carrozzeria },
+        { key: "mechanics", label: labels.comp_meccanica },
+        { key: "consumables", label: labels.comp_consumo },
         { key: "final", label: labels.final_total },
     ];
 
-    /* ------------------ Compute final totals ------------------ */
-    const sumImponibile = ["voci", "carrozzeria", "meccanica", "consumo"].reduce(
-        (acc, g) => acc.plus(parseDecimal(calculate(g).imponibile)),
-        new Decimal(0)
-    );
+    // Final quote totals
+    const finalTotals = useMemo(() => {
+        const groups = ["parts", "bodywork", "mechanics", "consumables"];
 
-    const finalCalc = (() => {
-        const iva = parseDecimal(rows.final.iva);
-        const imponibile = sumImponibile;
-        const imposta = imponibile.mul(iva).div(100);
-        const totaleIvato = imponibile.plus(imposta);
+        const totalNoVAT = groups.reduce((acc, g) => acc.plus(parseDecimal(calculate(g).taxable)), new Decimal(0))
+            .plus(parseDecimal(partsCalc.taxable));
+
+        const totalVAT = groups.reduce((acc, g) => acc.plus(parseDecimal(calculate(g).taxAmount)), new Decimal(0))
+            .plus(parseDecimal(partsCalc.taxAmount));
+
+        const totalWithVAT = groups.reduce((acc, g) => acc.plus(parseDecimal(calculate(g).totalWithTax)), new Decimal(0))
+            .plus(parseDecimal(partsCalc.totalWithTax));
+
         return {
-            total: "0.00", // skipped
-            imponibile: imponibile.toFixed(2),
-            imposta: imposta.toFixed(2),
-            totaleIvato: totaleIvato.toFixed(2),
+            totalNoVAT,
+            totalVAT,
+            totalWithVAT
         };
-    })();
+    }, [complementaryItems, autoTotals, partsCalc]);
 
     return (
         <div className={styles.wrapper}>
-            {groups.map((g) => {
-                const calc = g.key === "final" ? finalCalc : calculate(g.key);
+            {groupMap.map((g) => {
+                const isFinal = g.key === "final";
+                const isPartsTotal = g.key === "partsTotal";
+                const calc = isFinal
+                    ? null
+                    : isPartsTotal
+                        ? partsCalc
+                        : calculate(g.key);
+                const row = isPartsTotal || isFinal ? {} : safeGroup(g.key);
 
                 return (
                     <div key={g.key} className={styles.sectionCard}>
                         <h3 className={styles.sectionTitle}>{g.label}</h3>
-                        <div className={g.key !== "final" ? styles.row : `${styles.row} ${styles.finalRow}`}>
-                            {g.key !== "final" ? (
+                        <div className={styles.row}>
+                            {!isFinal ? (
                                 <>
-                                    <FormField
-                                        ref={addToRefs}
-                                        label={labels.quantity}
-                                        type="number"
-                                        value={rows[g.key].quantity}
-                                        onChange={(v) => handleChange(g.key, "quantity", v)}
-                                    />
-                                    <FormField
-                                        ref={addToRefs}
-                                        label={labels.price}
-                                        type="number"
-                                        value={rows[g.key].price}
-                                        onChange={(v) => handleChange(g.key, "price", v)}
-                                        onEnter={() => handleBlurDecimal(g.key, "price")}
-                                        symbol="€"
-                                    />
+                                    {isPartsTotal ? (
+                                        <>
+                                            <div className={styles.inputWrapper}></div>
+                                            <div className={styles.inputWrapper}></div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FormField
+                                                label={labels.quantity}
+                                                value={row.quantity}
+                                                type="number"
+                                                readOnly={row.readOnly}
+                                                onChange={(v) => updateComplementaryField(g.key, "quantity", v)}
+                                            />
+                                            <FormField
+                                                label={labels.price}
+                                                value={row.price}
+                                                type="number"
+                                                readOnly={row.readOnly}
+                                                onChange={(v) => updateComplementaryField(g.key, "price", v)}
+                                                symbol="€"
+                                            />
+                                        </>
+                                    )}
                                     <FormField
                                         label={labels.total}
-                                        type="text"
-                                        value={calc.total}
-                                        onChange={() => { }}
+                                        value={formatDecimal(calc.total)}
+                                        readOnly
                                         symbol="€"
                                     />
                                     <FormField
                                         label={labels.imponibile}
-                                        type="text"
-                                        value={calc.imponibile}
-                                        onChange={() => { }}
+                                        value={formatDecimal(calc.taxable)}
+                                        readOnly
                                         symbol="€"
                                     />
                                     <FormField
-                                        ref={addToRefs}
                                         label={labels.iva_percentage}
+                                        value={calc.tax ?? "22"}
                                         type="number"
-                                        value={rows[g.key].iva}
-                                        onChange={(v) => handleChange(g.key, "iva", v)}
+                                        onChange={(v) => {
+                                            if (isPartsTotal) {
+                                                updateComplementaryField("parts", "tax", v);
+                                            } else {
+                                                updateComplementaryField(g.key, "tax", v);
+                                            }
+                                        }}
                                     />
                                     <FormField
                                         label={labels.imposta}
-                                        type="text"
-                                        value={calc.imposta}
-                                        onChange={() => { }}
+                                        value={formatDecimal(calc.taxAmount)}
+                                        readOnly
                                         symbol="€"
                                     />
                                     <FormField
                                         label={labels.total_with_iva}
-                                        type="text"
-                                        value={calc.totaleIvato}
-                                        onChange={() => { }}
+                                        value={formatDecimal(calc.totalWithTax)}
+                                        readOnly
                                         symbol="€"
                                     />
                                 </>
                             ) : (
                                 <>
-                                    {[...Array(4)].map((_, idx) => (
-                                        <div key={`empty-${idx}`} className={styles.inputWrapper}></div>
-                                    ))}
+                                    <div className={styles.inputWrapper}></div>
+                                    <div className={styles.inputWrapper}></div>
+                                    <div className={styles.inputWrapper}></div>
+                                    <div className={styles.inputWrapper}></div>
+
+                                    {/* FINAL TOTAL */}
                                     <FormField
-                                        ref={addToRefs}
-                                        label={labels.iva_percentage}
-                                        type="number"
-                                        value={rows.final.iva}
-                                        onChange={(v) => handleChange("final", "iva", v)}
+                                        label={labels.total_no_vat}
+                                        value={formatDecimal(finalTotals.totalNoVAT)}
+                                        readOnly
+                                        symbol="€"
                                     />
                                     <FormField
-                                        label={labels.imposta}
-                                        type="text"
-                                        value={finalCalc.imposta}
-                                        onChange={() => { }}
+                                        label={labels.total_vat_amount}
+                                        value={formatDecimal(finalTotals.totalVAT)}
+                                        readOnly
                                         symbol="€"
                                     />
                                     <FormField
                                         label={labels.total_with_iva}
-                                        type="text"
-                                        value={finalCalc.totaleIvato}
-                                        onChange={() => { }}
+                                        value={formatDecimal(finalTotals.totalWithVAT)}
+                                        readOnly
                                         symbol="€"
                                     />
+
                                 </>
                             )}
                         </div>

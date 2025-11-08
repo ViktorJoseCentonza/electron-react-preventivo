@@ -7,7 +7,6 @@ export default function HomePage() {
     const navigate = useNavigate();
     const { labels } = useLanguage();
 
-    // Carica i preventivi all'avvio
     useEffect(() => {
         async function fetchQuotes() {
             if (window.api?.listQuotes) {
@@ -19,18 +18,21 @@ export default function HomePage() {
         fetchQuotes();
     }, []);
 
-
+    // Get display name: client + model if available, else fallback to filename
+    const getDisplayName = (quote) => {
+        if (quote.client && quote.model) {
+            return `${quote.client} - ${quote.model}`;
+        }
+        if (quote._fileName) {
+            // Remove extension and replace underscores with spaces
+            return quote._fileName.replace(".json", "").replace(/_/g, " ");
+        }
+        return labels.unnamedQuote;
+    };
 
     return (
         <div className="p-4">
             <h1 className="text-2xl font-bold mb-4">{labels.homeTitle}</h1>
-
-            <button
-                className="mb-6 px-4 py-2 bg-blue-600 text-white rounded"
-                onClick={() => navigate("/quote")}
-            >
-                {labels.newQuote}
-            </button>
 
             <h2 className="text-xl font-semibold mb-2">{labels.existingQuotes}</h2>
             {quotes.length === 0 && <p>{labels.noQuotes}</p>}
@@ -40,13 +42,9 @@ export default function HomePage() {
                     <li key={index}>
                         <button
                             className="text-left w-full mb-2 p-2 border rounded hover:bg-gray-700"
-                            onClick={() =>
-                                alert(
-                                    `${labels.editPlaceholder} ${q.client || labels.unnamedQuote}`
-                                )
-                            }
+                            onClick={() => navigate(`/quote/edit/${q._fileName}`)}
                         >
-                            {q.client || labels.unnamedQuote} - {q.quoteDate || labels.noDate}
+                            {getDisplayName(q)}
                         </button>
                     </li>
                 ))}
