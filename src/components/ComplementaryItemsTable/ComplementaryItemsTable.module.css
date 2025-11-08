@@ -1,0 +1,105 @@
+.wrapper {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Section card styling */
+.sectionCard {
+    padding: 0.75rem;
+    background-color: #2c2c2c;
+    /* softer dark */
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-default);
+}
+
+/* Section title */
+.sectionTitle {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    /* slightly bigger */
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+/* Grid for inputs */
+.row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+/* Input wrapper */
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+}
+
+/* Field labels */
+.inputWrapper .label {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: #f0f0f0;
+}
+
+/* Final row style */
+.finalRow .inputWrapper {
+    background-color: #3a3a3a;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+}
+
+.finalRow .input {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Symbol wrapper (for €) */
+.symbolWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.symbolWrapper .input {
+    padding-right: 1.5rem;
+}
+
+.symbol {
+    position: absolute;
+    right: 0.4rem;
+    pointer-events: none;
+    color: #f0f0f0;
+}
+
+/* Responsive: stack inputs on smaller screens */
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 per row */
+    }
+}
+
+@media (max-width: 768px) {
+    .row {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 per row */
+    }
+}
+
+@media (max-width: 480px) {
+    .row {
+        grid-template-columns: 1fr;
+        /* single column */
+    }
+
+    .sectionCard {
+        padding: 0.5rem;
+    }
+
+    .sectionTitle {
+        font-size: 0.95rem;
+    }
+}

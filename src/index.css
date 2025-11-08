@@ -1,0 +1,106 @@
+:root {
+  --color-primary: #1a73e8;
+  --color-secondary: #3a3a3a;
+  /* softer gray for inputs */
+  --color-bg: #242424;
+  --color-text: #e0e0e0;
+  /* softer text */
+  --color-text-dark: #d0d0d0;
+  --color-header: #2a2a2a;
+  /* slightly lighter than bg for sections */
+  --color-footer: #2a2a2a;
+  --color-hover: #5a87ff;
+  /* softer hover */
+  --font-base: 'Arial', sans-serif;
+
+  --color-nav-bg: transparent;
+  /* default nav link background */
+  --color-nav-hover: #4b5563;
+  /* hover background for nav links */
+  --color-nav-active: #1a73e8;
+  /* active nav link background */
+  --color-text-hover: #ffffff;
+  /* text color on hover */
+  --color-button-bg: #1a73e8;
+  /* main button background */
+  --color-button-hover: #1461c2;
+  /* hover state for buttons */
+  --color-button-text: #ffffff;
+  /* button text color */
+  --color-border: #ccc;
+  /* default input border */
+  --color-border-hover: #1a73e8;
+  /* hover/focus border */
+  --shadow-default: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* default element shadow */
+  --shadow-focus: 0 0 0 2px rgba(26, 115, 232, 0.3);
+  /* focus outline shadow */
+  --color-toggle-bg: #4b5563;
+  /* track background */
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-hover);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  width: 100%;
+}
+
+/* #region buttonstyles */
+
+.btn,
+.navLink {
+  margin: 0.5rem;
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: var(--color-nav-active);
+  /* base background */
+  color: var(--color-text);
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+/* Hover state for both buttons and nav links */
+.btn:hover,
+.navLink:hover {
+  background-color: var(--color-nav-hover);
+  color: var(--color-text-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state for nav links or toggled buttons */
+.btn:active,
+.navLink.active {
+  background-color: var(--color-nav-active);
+  color: var(--color-text-hover);
+}
+
+/* Optional: focus state for accessibility */
+.btn:focus,
+.navLink:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* #endregion buttonstyles */
