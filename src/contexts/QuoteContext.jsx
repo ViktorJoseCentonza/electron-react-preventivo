@@ -14,6 +14,25 @@ export function QuoteProvider({ children }) {
         quoteDate: "",
     };
 
+    const resetQuote = () => {
+        setQuote({ ...defaultQuote });
+        setItems([]);
+        setComplementaryItems({
+            parts: { quantity: "0", price: "0", tax: "22" },
+            bodywork: { quantity: "0", price: "40", tax: "22" },
+            mechanics: { quantity: "0", price: "40", tax: "22" },
+            consumables: { quantity: "0", price: "24", tax: "22" },
+            final: { tax: "22" },
+        });
+
+        setAutoTotals({
+            bodywork: 0,
+            mechanics: 0,
+            consumables: 0,
+        });
+    };
+
+
     const [quote, setQuote] = useState({ ...defaultQuote });
     const [items, setItems] = useState([]);
     const [complementaryItems, setComplementaryItems] = useState({
@@ -97,7 +116,8 @@ export function QuoteProvider({ children }) {
             finalTotals,
             autoTotals,
             setAutoTotals,
-            partsTotal
+            partsTotal,
+            resetQuote
         }}>
             {children}
         </QuoteContext.Provider>
