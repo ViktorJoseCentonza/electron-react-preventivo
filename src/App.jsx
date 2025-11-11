@@ -1,8 +1,7 @@
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import DefaultLayout from './layouts/DefaultLayout/DefaultLayout';
-import EditQuotePage from './pages/EditQuotePage';
-import HomePage from './pages/HomePage';
-import QuotePage from './pages/QuotePage';
+import HomePage from './pages/HomePage/HomePage';
+import QuoteEditorPage from './pages/QuoteEditorPage/QuoteEditorPage';
 
 function App() {
   return (
@@ -10,8 +9,8 @@ function App() {
       <DefaultLayout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/quote" element={<QuotePage />} />
-          <Route path="/quote/edit/:fileName" element={<EditQuotePage />} />
+          <Route path="/quote" element={<QuoteEditorPage />} />
+          <Route path="/quote/edit/:fileName" element={<QuoteEditorPage />} />
 
           {/* Redirect any unknown route to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />

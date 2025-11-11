@@ -1,0 +1,205 @@
+.container {
+    padding: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    color: var(--color-text);
+}
+
+/* Section titles */
+.sectionTitle {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+/* Utility to make a field span full width in section grids */
+.fullRow {
+    grid-column: 1 / -1;
+}
+
+/* ==================== GENERAL SECTION ==================== */
+.generalSection {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 0.9rem 1rem;
+    background: var(--color-header);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-default);
+    overflow: visible;
+}
+
+.generalSection>* {
+    min-width: 0;
+}
+
+/* ==================== ITEMS SECTION ==================== */
+.itemsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.headerCell {
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.itemHeader {
+    background: var(--color-bg) !important;
+    box-shadow: none !important;
+    border: 1px dashed var(--color-border);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.itemRow {
+    display: grid;
+    grid-template-columns:
+        minmax(120px, 1.2fr) minmax(160px, 2fr) repeat(4, minmax(0, 0.7fr)) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    gap: 0.5rem;
+    align-items: start;
+    padding: 0.6rem;
+    border-radius: 0.5rem;
+    position: relative;
+    background-color: var(--color-secondary);
+    box-shadow: var(--shadow-default);
+    overflow: visible;
+}
+
+.itemRow>* {
+    min-width: 0;
+}
+
+.itemRow:nth-child(odd):not(.itemHeader) {
+    background-color: var(--color-secondary);
+}
+
+.itemRow:nth-child(even):not(.itemHeader) {
+    background-color: var(--color-header);
+}
+
+/* ==================== COMPLEMENTARY SECTION ==================== */
+.complementarySection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.compRow {
+    display: grid;
+    grid-template-columns:
+        minmax(160px, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(0, 1.2fr);
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--color-secondary);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-default);
+    align-items: start;
+    overflow: visible;
+}
+
+.compRow>* {
+    min-width: 0;
+}
+
+.compHeader {
+    background: var(--color-bg) !important;
+    box-shadow: none !important;
+    border: 1px dashed var(--color-border);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.compTitleCell {
+    display: flex;
+    align-items: start;
+    min-width: 0;
+}
+
+.compRow h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ==================== FINAL TOTALS ==================== */
+.finalTotals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    gap: 1rem;
+    padding: 0.9rem 1rem 1rem;
+    background-color: var(--color-header);
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-default);
+    overflow: visible;
+}
+
+.finalTotals>* {
+    min-width: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1100px) {
+    .itemRow {
+        grid-template-columns:
+            minmax(110px, 1fr) minmax(140px, 1.6fr) repeat(4, minmax(0, 0.8fr)) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .compRow {
+        grid-template-columns:
+            minmax(140px, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .generalSection {
+        grid-template-columns: 1fr;
+    }
+
+    .itemHeader {
+        display: none;
+    }
+
+    .itemRow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .compRow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .placeholder {
+        display: none;
+    }
+
+    .finalTotals {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 1rem;
+    }
+}

@@ -7,7 +7,7 @@ export default function DefaultLayout({ children }) {
         <div className={styles.container}>
             <Header />
             <main className={styles.main}>{children}</main>
-            <Footer />
+            <Footer className={styles.footer} />
         </div>
     );
 }

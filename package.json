@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
-    "pdfkit": "^0.17.2",
+    "pdf-lib": "^1.17.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5"

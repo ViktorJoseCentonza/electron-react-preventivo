@@ -20,6 +20,9 @@ export default {
     noDate: "Nessuna data",
     editPlaceholder: "Modifica placeholder per:",
 
+    search_placeholder: "Cerca preventivi...",
+    file: "File",
+
     source: "Citaz. fonte",
     description: "Descrizione",
     SR: "SR",
@@ -51,5 +54,13 @@ export default {
     saving: "Salvataggio...",
     quote_saved: "Preventivo salvato con successo!",
     quote_save_error: "Errore durante il salvataggio del preventivo.",
-    quote_save_canceled: "Salvataggio annullato."
+    quote_save_canceled: "Salvataggio annullato.",
+
+    // PDF labels
+    export_pdf: "Esporta PDF",
+    export_pdf_manual: "Esporta PDF Manualmente",
+    exporting: "Esportazione...",
+    pdf_exported: "PDF esportato con successo!",
+    pdf_export_error: "Errore durante l'esportazione PDF.",
+    pdf_export_canceled: "Esportazione PDF annullata."
 };

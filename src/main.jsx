@@ -1,16 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import { LanguageProvider } from './contexts/LanguageContext.jsx'
-import { QuoteProvider } from './contexts/QuoteContext.jsx'; // import your context provider
-import './index.css'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.jsx';
+import { LanguageProvider } from './contexts/LanguageContext.jsx';
+import { QuoteDataProvider } from './contexts/QuoteDataContext.jsx';
+import { QuoteStateProvider } from './contexts/QuoteStateContext.jsx';
+import { SearchProvider } from './contexts/SearchContext.jsx';
+import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LanguageProvider>
-      <QuoteProvider>
-        <App />
-      </QuoteProvider>
+      <QuoteDataProvider>
+        <QuoteStateProvider>
+          <SearchProvider>
+            <App />
+          </SearchProvider>
+        </QuoteStateProvider>
+      </QuoteDataProvider>
     </LanguageProvider>
-  </StrictMode>,
-)
+  </StrictMode>
+);

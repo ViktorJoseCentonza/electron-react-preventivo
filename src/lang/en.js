@@ -20,6 +20,9 @@ export default {
     noDate: "No Date",
     editPlaceholder: "Edit placeholder for:",
 
+    search_placeholder: "Search quotes...",
+    file: "File",
+
     source: "Source",
     description: "Description",
     SR: "SR",
@@ -51,5 +54,13 @@ export default {
     saving: "Saving...",
     quote_saved: "Quote saved successfully!",
     quote_save_error: "Error saving quote.",
-    quote_save_canceled: "Save canceled."
+    quote_save_canceled: "Save canceled.",
+
+    // PDF labels
+    export_pdf: "Export PDF",
+    export_pdf_manual: "Export PDF Manually",
+    exporting: "Exporting...",
+    pdf_exported: "PDF exported successfully!",
+    pdf_export_error: "Error exporting PDF.",
+    pdf_export_canceled: "PDF export canceled."
 };

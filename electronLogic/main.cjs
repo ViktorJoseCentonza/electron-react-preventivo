@@ -2,10 +2,9 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-// Import IPC handlers modulari
+// Import IPC handlers modularly
 require('./ipc/ipcJson.cjs');
 require('./ipc/ipcPdf.cjs');
-require('./ipc/ipcQuotes.cjs');
 
 function createWindow() {
     const win = new BrowserWindow({

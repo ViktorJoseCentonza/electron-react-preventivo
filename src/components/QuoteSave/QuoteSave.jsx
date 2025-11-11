@@ -1,97 +1,105 @@
 import { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useQuote } from "../../contexts/QuoteContext";
+import { useQuoteData } from "../../contexts/QuoteDataContext";
+import { useQuoteState } from "../../contexts/QuoteStateContext";
 import styles from "./QuoteSave.module.css";
 
-/**
- * QuoteSave Component
- * Automatically saves the current quote state to the app's folder with a generated filename
- * Also allows manual save with custom name/location
- */
-export default function QuoteSave({ mode = "create" }) {
+export default function QuoteSave() {
     const { labels } = useLanguage();
-    const { quote, items, complementaryItems } = useQuote();
+    const { quote } = useQuoteData();
+    const { markSaved } = useQuoteState();
+
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState("");
+    const [isError, setIsError] = useState(false);
 
-    const getQuoteData = () => ({
-        quote,
-        items,
-        complementary: complementaryItems
-    });
+    // Local builder: shape the JSON exactly as QuoteEditorPage expects when reading
+    const buildExportData = () => {
+        return {
+            // `quote` section (general data)
+            quote: {
+                client: quote.general?.client ?? "",
+                licensePlate: quote.general?.licensePlate ?? "",
+                model: quote.general?.model ?? "",
+                year: quote.general?.year ?? "",
+                chassis: quote.general?.chassis ?? "",
+                insurance: quote.general?.insurance ?? "",
+                quoteDate: quote.general?.quoteDate ?? "",
+            },
+            // items array (already without any ghost row)
+            items: Array.isArray(quote.items) ? quote.items : [],
+            // complementary groups + partsTotal
+            complementary: {
+                parts: { ...(quote.complementary?.parts ?? {}) },
+                bodywork: { ...(quote.complementary?.bodywork ?? {}) },
+                mechanics: { ...(quote.complementary?.mechanics ?? {}) },
+                consumables: { ...(quote.complementary?.consumables ?? {}) },
+                partsTotal: { ...(quote.complementary?.partsTotal ?? {}) },
+            },
+            // final totals (use current computed ones)
+            totals: {
+                subtotal: quote.totals?.subtotal ?? 0,
+                iva: quote.totals?.iva ?? 0,
+                totalWithIva: quote.totals?.totalWithIva ?? 0,
+            },
+        };
+    };
 
     const formatDateForFilename = (dateStr) => {
         if (!dateStr) {
             const now = new Date();
-            const dd = String(now.getDate()).padStart(2, "0");
-            const mm = String(now.getMonth() + 1).padStart(2, "0");
-            const yyyy = now.getFullYear();
-            return `${dd}-${mm}-${yyyy}`;
+            return `${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}`;
         }
-        return dateStr.replace(/\//g, "-"); // DD/MM/YYYY → DD-MM-YYYY
+        return String(dateStr).replace(/\//g, "-");
     };
 
     const generateFilename = () => {
-        const license = quote.licensePlate?.trim();
-        const model = quote.model?.trim();
-        const client = quote.client?.trim();
-        const date = formatDateForFilename(quote.quoteDate);
+        const license = quote.general?.licensePlate?.trim();
+        const model = quote.general?.model?.trim();
+        const client = quote.general?.client?.trim();
+        const date = formatDateForFilename(quote.general?.quoteDate);
 
         if (license && model) return `${license}_${model}_${date}.json`;
         if (client && model) return `${client}_${model}_${date}.json`;
         if (license && client) return `${license}_${client}_${date}.json`;
         if (client) return `${client}_no-model_${date}.json`;
-
         return `no-info_${date}.json`;
     };
 
-    const autoSaveQuote = async () => {
+    const saveQuote = async (manual = false) => {
         setIsSaving(true);
         setMessage("");
+        setIsError(false);
 
         try {
+            const data = buildExportData();
             const filename = generateFilename();
 
-            const saveResult = await window.api.exportJSONAuto({
-                filename,
-                data: getQuoteData()
-            });
-
-            if (!saveResult.ok) throw new Error(saveResult.error);
-
-            setMessage(labels.quote_saved || "Quote saved successfully!");
-        } catch (err) {
-            console.error("Error saving quote:", err);
-            setMessage(labels.quote_save_error || "Error saving quote.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const manualSaveQuote = async () => {
-        setIsSaving(true);
-        setMessage("");
-
-        try {
-            const defaultName = generateFilename();
-            const result = await window.api.chooseSavePath(defaultName);
-
-            if (!result.ok) {
-                setMessage(labels.quote_save_canceled || "Save canceled.");
-                return;
+            if (manual) {
+                // Manual "Save As"
+                const dialogResult = await window.api.quotes.chooseSavePath(filename);
+                if (!dialogResult.ok) {
+                    setMessage(labels.quote_save_canceled);
+                    return;
+                }
+                const writeResult = await window.api.quotes.exportToPath({
+                    targetPath: dialogResult.path,
+                    data,
+                });
+                if (!writeResult.ok) throw new Error(writeResult.error);
+                markSaved(dialogResult.path);
+            } else {
+                // Autosave to default folder
+                const result = await window.api.quotes.autosave({ filename, data });
+                if (!result.ok) throw new Error(result.error);
+                markSaved(filename);
             }
 
-            const saveResult = await window.api.exportJSONAtPath({
-                path: result.path,
-                data: getQuoteData()
-            });
-
-            if (!saveResult.ok) throw new Error(saveResult.error);
-
-            setMessage(labels.quote_saved || "Quote saved successfully!");
+            setMessage(labels.quote_saved);
         } catch (err) {
             console.error("Error saving quote:", err);
-            setMessage(labels.quote_save_error || "Error saving quote.");
+            setIsError(true);
+            setMessage(labels.quote_save_error);
         } finally {
             setIsSaving(false);
         }
@@ -99,25 +107,29 @@ export default function QuoteSave({ mode = "create" }) {
 
     return (
         <div className={styles.container}>
-            <button
-                onClick={autoSaveQuote}
-                disabled={isSaving}
-                className={styles.saveButton}
-            >
-                {isSaving
-                    ? labels.saving || "Saving..."
-                    : labels.save_quote || "Auto Save Quote"}
-            </button>
+            <div className={styles.buttons}>
+                <button
+                    disabled={isSaving}
+                    onClick={() => saveQuote(false)}
+                    className={styles.saveButton}
+                >
+                    {isSaving ? <span className={styles.spinner} /> : labels.save_quote}
+                </button>
 
-            <button
-                onClick={manualSaveQuote}
-                disabled={isSaving}
-                className={`${styles.saveButton} ${styles.manualButton}`}
-            >
-                {labels.save_quote_manual || "Save Quote Manually"}
-            </button>
+                <button
+                    disabled={isSaving}
+                    onClick={() => saveQuote(true)}
+                    className={`${styles.saveButton} ${styles.manualButton}`}
+                >
+                    {labels.save_quote_manual}
+                </button>
+            </div>
 
-            {message && <p className={styles.message}>{message}</p>}
+            {message && (
+                <p className={`${styles.message} ${isError ? styles.error : styles.success}`}>
+                    {message}
+                </p>
+            )}
         </div>
     );
 }

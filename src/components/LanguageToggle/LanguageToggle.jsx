@@ -9,12 +9,14 @@ export default function LanguageToggle() {
     };
 
     return (
-        <div
-            className={`${styles.toggleWrapper} ${lang === "en" ? styles.en : ""}`}
-            onClick={toggleLang}
-        >
-            <div className={styles.thumbContainer}>
-                <div className={styles.sliderThumb}></div>
+        <div>
+            <div
+                className={`${styles.toggleWrapper} ${lang === "en" ? styles.en : ""}`}
+                onClick={toggleLang}
+            >
+                <div className={styles.thumbContainer}>
+                    <div className={styles.sliderThumb}></div>
+                </div>
             </div>
         </div>
     );

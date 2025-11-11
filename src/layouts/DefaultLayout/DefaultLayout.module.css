@@ -1,10 +1,26 @@
 .container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    /* full viewport height */
 }
 
 .main {
     flex: 1;
+    /* take all space except footer */
+    overflow-y: auto;
+    /* scroll content if needed */
+}
+
+/* Footer always visible at bottom */
+.footer {
+    height: 60px;
+    /* fixed height for footer */
+    background-color: var(--color-footer);
+    color: var(--color-text);
     padding: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    /* never shrink */
 }

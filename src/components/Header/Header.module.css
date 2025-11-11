@@ -3,25 +3,50 @@
     color: var(--color-text);
     padding: 1rem 2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
-    /* allow wrapping on smaller screens */
-    gap: 0.5rem;
+    gap: 1rem;
+}
+
+.titleWrapper {
+    flex-shrink: 0;
+    min-width: 0;
+    /* allow title to shrink for ellipsis */
 }
 
 .title {
     font-size: 1.5rem;
     font-weight: bold;
-    flex-shrink: 0;
-    /* don't shrink title */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 nav {
     display: flex;
-    align-items: center;
-    gap: 1rem;
     flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    /* allow nav to grow/shrink */
+    min-width: 0;
+    overflow-x: auto;
+    /* enable horizontal scroll on tiny screens */
+}
+
+nav::-webkit-scrollbar {
+    height: 6px;
+}
+
+nav::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 3px;
+}
+
+nav::-webkit-scrollbar-track {
+    background: var(--color-header);
 }
 
 .navLink {
@@ -32,6 +57,7 @@ nav {
     text-decoration: none;
     font-size: 1rem;
     transition: all 0.2s ease-in-out;
+    white-space: nowrap;
 }
 
 .navLink:hover {
@@ -45,34 +71,91 @@ nav {
     background-color: var(--color-nav-active);
 }
 
+.controls {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.5rem;
+    /* spacing between search and toggle */
+}
+
+/* Search wrapper grows but respects toggle space */
+.searchWrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.searchWrapper input {
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Make toggle a fixed size in flex to prevent overlap */
+.controls> :last-child {
+    margin-left: 2rem;
+}
+
 /* Responsive tweaks */
+@media (max-width: 1024px) {
+    .title {
+        font-size: 1.35rem;
+    }
+}
+
 @media (max-width: 768px) {
     .header {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .title {
+        font-size: 1.25rem;
     }
 
     nav {
-        width: 100%;
-        justify-content: flex-start;
+        justify-content: start;
         gap: 0.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .navLink {
-        flex: 1;
-        text-align: center;
     }
 }
 
 @media (max-width: 480px) {
-    .title {
-        font-size: 1.25rem;
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .titleWrapper {
+        width: 100%;
+    }
+
+    nav {
+        justify-content: start;
+        flex-wrap: nowrap;
+        /* horizontal scroll instead of wrapping */
+        overflow-x: auto;
+        gap: 0.5rem;
     }
 
     .navLink {
         font-size: 0.9rem;
         padding: 0.4rem 0.8rem;
+    }
+
+    .controls {
+        justify-content: flex-start;
+        /* align search + toggle together */
+        width: 100%;
+        gap: 0.5rem;
+        /* spacing between search and toggle */
+    }
+
+    .searchWrapper {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Toggle stays fixed size even on tiny screens */
+    .controls> :last-child {
+        flex: 0 0 auto;
     }
 }
