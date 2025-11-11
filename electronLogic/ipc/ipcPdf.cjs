@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { PDFDocument, StandardFonts } = require("pdf-lib");
 
-// Ensure directory exists (helper function)
+// Ensure directory exists
 function ensureDir(dirPath) {
     try {
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
@@ -13,53 +13,136 @@ function ensureDir(dirPath) {
     }
 }
 
-// Create a PDF from quote data
+// Create PDF from the quote data
 async function createPdfFromQuote(quoteData) {
     if (!quoteData || typeof quoteData !== "object") {
         throw new Error("Invalid quoteData: not an object");
     }
 
-    const { general, items, totals } = quoteData;
-    if (!general || !items || !totals) {
-        throw new Error("Invalid quoteData structure: missing general/items/totals");
+    const { general, items, complementary, totals } = quoteData;
+    if (!general || !items || !complementary || !totals) {
+        throw new Error("Invalid quoteData structure: missing general/items/complementary/totals");
     }
 
-    // Create a new PDF document
+    // Create PDF document and page
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595, 842]); // A4 size
-
-    // Embed a standard font
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);  // Correct usage of font
-    const fontSize = 12;
+    const page = pdfDoc.addPage([595, 842]); // A4 size approx
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica); // Standard font
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Bold font for headers
+    const fontSize = 10;
+    const headerFontSize = 12;
+    const boldHeaderFontSize = 14;
+    const marginLeft = 50;
+    const columnWidth = 90; // Width for each column in the table
+    const headerColumnWidth = 120; // Wider header columns
+    const rowHeight = 20; // Height for each row in the table
 
     let y = 800;
-    const marginLeft = 50;
 
-    // Add text to the PDF (client details)
-    page.drawText(`Client: ${general.client || "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+    // Client Information Section (matching HTML form layout with border cells)
+    page.drawText("Cliente", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
     y -= 20;
-    page.drawText(`License Plate: ${general.licensePlate || "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+    page.drawText(general.client, { x: marginLeft + 100, y, size: fontSize, font });
     y -= 20;
-    page.drawText(`Model: ${general.model || "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+
+    page.drawText("Targa", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
     y -= 20;
-    page.drawText(`Year: ${general.year || "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+    page.drawText(general.licensePlate, { x: marginLeft + 100, y, size: fontSize, font });
     y -= 20;
-    page.drawText(`Quote Date: ${general.quoteDate || "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+
+    page.drawText("Modello", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(general.model, { x: marginLeft + 100, y, size: fontSize, font });
+    y -= 20;
+
+    page.drawText("Anno", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(general.year, { x: marginLeft + 100, y, size: fontSize, font });
+    y -= 20;
+
+    page.drawText("Telaio", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(general.chassis, { x: marginLeft + 100, y, size: fontSize, font });
+    y -= 20;
+
+    page.drawText("Assicurazione", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(general.insurance, { x: marginLeft + 100, y, size: fontSize, font });
+    y -= 20;
+
+    page.drawText("Data Preventivo", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(general.quoteDate, { x: marginLeft + 100, y, size: fontSize, font });
     y -= 40;
 
-    // Add items to the PDF
-    page.drawText("Items:", { x: marginLeft, y, size: fontSize, font });
+    // Items Table Header (citazione fonte, descrizione, etc.)
+    page.drawText("Items", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
     y -= 20;
 
-    items.forEach((item, idx) => {
-        const desc = item.description || "N/A";
-        page.drawText(`Item ${idx + 1}: ${desc}`, { x: marginLeft, y, size: fontSize, font });
+    const headers = ["Citaz. fonte", "Descrizione", "SR", "LA", "VE", "ME", "Q.tà", "Prezzo", "Totale"];
+    headers.forEach((header, index) => {
+        page.drawText(header, { x: marginLeft + (index * headerColumnWidth), y, size: headerFontSize, font: boldFont });
+    });
+
+    // Draw Border below header
+    y -= 20; // Move down to next row
+    page.drawLine({ start: { x: marginLeft, y }, end: { x: marginLeft + (headers.length * headerColumnWidth), y }, thickness: 1 });
+
+    y -= 10; // Space between header and first row
+
+    // Draw Table Rows for each item (using items data)
+    items.forEach((item) => {
+        const row = [
+            item.source || "N/A",
+            item.description || "N/A",
+            item.SR || 0,
+            item.LA || 0,
+            item.VE || 0,
+            item.ME || 0,
+            item.quantity || 0,
+            item.price || 0,
+            item.total || 0
+        ];
+
+        row.forEach((cell, index) => {
+            page.drawText(String(cell), { x: marginLeft + (index * columnWidth), y, size: fontSize, font });
+        });
+
+        y -= rowHeight; // Move down to the next row after each item
+
+        // Draw Border for each row
+        page.drawLine({ start: { x: marginLeft, y }, end: { x: marginLeft + (headers.length * columnWidth), y }, thickness: 1 });
+    });
+
+    y -= 20; // Space between table and next section
+
+    // Complementary Charges Section
+    page.drawText("Voci complementari", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+
+    Object.keys(complementary).forEach(key => {
+        const part = complementary[key];
+        page.drawText(`${key.charAt(0).toUpperCase() + key.slice(1)}:`, { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+        y -= 20;
+        page.drawText(`Q.tà: ${part.quantity} Prezzo: €${part.price} Totale: €${part.totalWithTax}`, { x: marginLeft + 100, y, size: fontSize, font });
         y -= 20;
     });
 
-    // Add total to the PDF
+    // Totals Section (with proper formatting and spacing)
+    y -= 20; // Space between sections
+    page.drawText("Totale senza IVA", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
     y -= 20;
-    page.drawText(`Total: ${totals.totalWithIva ?? "N/A"}`, { x: marginLeft, y, size: fontSize, font });
+    page.drawText(`€ ${totals.subtotal.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
+
+    y -= 20;
+    page.drawText("Totale IVA", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(`€ ${totals.iva.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
+
+    y -= 20;
+    page.drawText("Totale IVA inclusa", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
+    y -= 20;
+    page.drawText(`€ ${totals.totalWithIva.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
 
     const pdfBytes = await pdfDoc.save();
     return pdfBytes;
