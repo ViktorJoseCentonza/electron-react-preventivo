@@ -5,30 +5,69 @@ const ExportPdfButton = () => {
     const { quote } = useQuoteData();
     const [status, setStatus] = useState("");
 
+    const withTimeout = (promise, ms, onTimeout) =>
+        new Promise((resolve) => {
+            let settled = false;
+            const timer = setTimeout(() => {
+                if (!settled) {
+                    onTimeout?.();
+                    resolve({ ok: false, error: `Timed out after ${ms}ms` });
+                }
+            }, ms);
+            promise
+                .then((v) => {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(v);
+                })
+                .catch((e) => {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve({ ok: false, error: e?.message || String(e) });
+                });
+        });
+
     const handleExportPdf = async () => {
+        if (!quote) {
+            setStatus("No quote data available.");
+            return;
+        }
+
+        setStatus("Preparing PDF…");
+
         try {
-            // Show save dialog for PDF
-            const { ok, path, canceled } = await window.api.quotes.choosePdfSavePath("quote.pdf");
+            const { ok, path, canceled, error } = await withTimeout(
+                window.api?.quotes?.choosePdfSavePath?.("quote.pdf"),
+                15000,
+                () => setStatus("Save dialog taking too long…")
+            );
 
-            if (canceled) {
-                setStatus("Export canceled.");
+            if (!ok) {
+                if (canceled) {
+                    setStatus("Export canceled.");
+                    return;
+                }
+                setStatus(`Failed to choose save path: ${error || "unknown error"}`);
                 return;
             }
 
-            if (!ok || !path) {
-                setStatus("Failed to choose save path.");
+            if (!path) {
+                setStatus("No path selected.");
                 return;
             }
 
-            const { ok: exportOk, error } = await window.api.quotes.exportToPdf({
-                targetPath: path,
-                data: quote,
-            });
+            setStatus("Generating PDF…");
+
+            const { ok: exportOk, error: exportErr } = await withTimeout(
+                window.api?.quotes?.exportToPdf?.({ targetPath: path, data: quote }),
+                30000,
+                () => setStatus("PDF generation taking longer than expected…")
+            );
 
             if (exportOk) {
-                setStatus(`PDF saved at: ${path}`);
+                setStatus(`PDF successfully saved at: ${path}`);
             } else {
-                setStatus(`Failed to export PDF: ${error}`);
+                setStatus(`Failed to export PDF: ${exportErr || "unknown error"}`);
             }
         } catch (error) {
             setStatus(`Error: ${error.message}`);

@@ -18,17 +18,21 @@ export default function SearchComponent() {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
     const [inputWidth, setInputWidth] = useState(0);
-    const wrapperRef = useRef();
-    const inputRef = useRef();
+    const wrapperRef = useRef(null);
+    const inputRef = useRef(null);
     const navigate = useNavigate();
 
-    // Measure input width
+    // Measure input width initially and on window resize
     useEffect(() => {
-        if (inputRef.current) {
-            setInputWidth(inputRef.current.offsetWidth);
-        }
-    }, [inputRef.current?.offsetWidth]);
+        const measure = () => {
+            if (inputRef.current) setInputWidth(inputRef.current.offsetWidth);
+        };
+        measure();
+        window.addEventListener("resize", measure);
+        return () => window.removeEventListener("resize", measure);
+    }, []);
 
+    // Debounced search via normalized API
     useEffect(() => {
         if (!query) {
             setResults([]);
@@ -37,28 +41,51 @@ export default function SearchComponent() {
 
         const timeout = setTimeout(async () => {
             try {
-                const matches = await window.api.searchQuotes(query);
-                const normalized = matches.map((res) => ({
-                    ...res,
-                    _fileName: res.file,
-                }));
-                setResults(normalized);
+                const resp = await window.api.quotes.search(query);
+                if (resp?.ok && Array.isArray(resp.matches)) {
+                    setResults(
+                        resp.matches.map((m) => ({ ...m, _fileName: m.file }))
+                    );
+                } else {
+                    setResults([]);
+                    if (resp?.error) console.error("Search error:", resp.error);
+                }
             } catch (err) {
                 console.error("Search error:", err);
+                setResults([]);
             }
         }, 200);
 
         return () => clearTimeout(timeout);
     }, [query]);
 
+    // Format YYYY-MM-DD -> DD-MM-YYYY
+    const formatIsoToDDMMYYYY = (iso) => {
+        if (typeof iso !== "string") return iso;
+        const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return iso;
+        const [, y, m, d] = match;
+        return `${d}-${m}-${y}`;
+    };
+
+    // Highlight matches safely
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const highlightMatch = (value, matchedFields, key) => {
-        if (!matchedFields.includes(key)) return value;
-        const regex = new RegExp(`(${query})`, "gi");
+        if (!matchedFields?.includes(key)) return value || "";
+        const safe = escapeRegex(query);
+        if (!safe) return value || "";
+        const regex = new RegExp(`(${safe})`, "gi");
         return value
             ? value.toString().split(regex).map((part, i) =>
                 regex.test(part) ? <mark key={i}>{part}</mark> : part
             )
             : "";
+    };
+
+    const renderFieldValue = (res, field) => {
+        let raw = res.preview?.[field] ?? "";
+        if (field === "quoteDate") raw = formatIsoToDDMMYYYY(raw);
+        return highlightMatch(raw, res.matchedFields, field);
     };
 
     const handleClick = (fileName) => {
@@ -79,10 +106,7 @@ export default function SearchComponent() {
             />
 
             {results.length > 0 && (
-                <div
-                    className={styles.results}
-                    style={{ width: inputWidth }}
-                >
+                <div className={styles.results} style={{ width: inputWidth }}>
                     {results.map((res, idx) => (
                         <button
                             key={idx}
@@ -93,13 +117,7 @@ export default function SearchComponent() {
                             {GENERAL_FIELDS.map((field) => (
                                 <div key={field} className={styles.resultRow}>
                                     <strong>{labels[field] || field}:</strong>{" "}
-                                    <span>
-                                        {highlightMatch(
-                                            res.data?.quote?.[field] ?? "",
-                                            res.matchedFields,
-                                            field
-                                        )}
-                                    </span>
+                                    <span>{renderFieldValue(res, field)}</span>
                                 </div>
                             ))}
                         </button>

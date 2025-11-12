@@ -1,183 +1,48 @@
-const { ipcMain, dialog } = require("electron");
+const { ipcMain, dialog, BrowserWindow } = require("electron");
 const fs = require("fs");
 const path = require("path");
-const { PDFDocument, StandardFonts } = require("pdf-lib");
 
-// Ensure directory exists
+// --- utils ---------------------------------------------------------
 function ensureDir(dirPath) {
     try {
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
     } catch (err) {
-        console.error("Failed to ensure directory:", dirPath, err);
+        console.error("[ipcPdf] ensureDir error:", dirPath, err);
         throw err;
     }
 }
+function readText(filePath) { return fs.readFileSync(filePath, "utf8"); }
+function readBinary(filePath) { return fs.readFileSync(filePath); }
 
-// Create PDF from the quote data
-async function createPdfFromQuote(quoteData) {
-    if (!quoteData || typeof quoteData !== "object") {
-        throw new Error("Invalid quoteData: not an object");
-    }
-
-    const { general, items, complementary, totals } = quoteData;
-    if (!general || !items || !complementary || !totals) {
-        throw new Error("Invalid quoteData structure: missing general/items/complementary/totals");
-    }
-
-    // Create PDF document and page
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595, 842]); // A4 size approx
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica); // Standard font
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Bold font for headers
-    const fontSize = 10;
-    const headerFontSize = 12;
-    const boldHeaderFontSize = 14;
-    const marginLeft = 50;
-    const columnWidth = 90; // Width for each column in the table
-    const headerColumnWidth = 120; // Wider header columns
-    const rowHeight = 20; // Height for each row in the table
-
-    let y = 800;
-
-    // Client Information Section (matching HTML form layout with border cells)
-    page.drawText("Cliente", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.client, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Targa", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.licensePlate, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Modello", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.model, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Anno", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.year, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Telaio", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.chassis, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Assicurazione", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.insurance, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 20;
-
-    page.drawText("Data Preventivo", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(general.quoteDate, { x: marginLeft + 100, y, size: fontSize, font });
-    y -= 40;
-
-    // Items Table Header (citazione fonte, descrizione, etc.)
-    page.drawText("Items", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-
-    const headers = ["Citaz. fonte", "Descrizione", "SR", "LA", "VE", "ME", "Q.tà", "Prezzo", "Totale"];
-    headers.forEach((header, index) => {
-        page.drawText(header, { x: marginLeft + (index * headerColumnWidth), y, size: headerFontSize, font: boldFont });
-    });
-
-    // Draw Border below header
-    y -= 20; // Move down to next row
-    page.drawLine({ start: { x: marginLeft, y }, end: { x: marginLeft + (headers.length * headerColumnWidth), y }, thickness: 1 });
-
-    y -= 10; // Space between header and first row
-
-    // Draw Table Rows for each item (using items data)
-    items.forEach((item) => {
-        const row = [
-            item.source || "N/A",
-            item.description || "N/A",
-            item.SR || 0,
-            item.LA || 0,
-            item.VE || 0,
-            item.ME || 0,
-            item.quantity || 0,
-            item.price || 0,
-            item.total || 0
-        ];
-
-        row.forEach((cell, index) => {
-            page.drawText(String(cell), { x: marginLeft + (index * columnWidth), y, size: fontSize, font });
-        });
-
-        y -= rowHeight; // Move down to the next row after each item
-
-        // Draw Border for each row
-        page.drawLine({ start: { x: marginLeft, y }, end: { x: marginLeft + (headers.length * columnWidth), y }, thickness: 1 });
-    });
-
-    y -= 20; // Space between table and next section
-
-    // Complementary Charges Section
-    page.drawText("Voci complementari", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-
-    Object.keys(complementary).forEach(key => {
-        const part = complementary[key];
-        page.drawText(`${key.charAt(0).toUpperCase() + key.slice(1)}:`, { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-        y -= 20;
-        page.drawText(`Q.tà: ${part.quantity} Prezzo: €${part.price} Totale: €${part.totalWithTax}`, { x: marginLeft + 100, y, size: fontSize, font });
-        y -= 20;
-    });
-
-    // Totals Section (with proper formatting and spacing)
-    y -= 20; // Space between sections
-    page.drawText("Totale senza IVA", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(`€ ${totals.subtotal.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
-
-    y -= 20;
-    page.drawText("Totale IVA", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(`€ ${totals.iva.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
-
-    y -= 20;
-    page.drawText("Totale IVA inclusa", { x: marginLeft, y, size: boldHeaderFontSize, font: boldFont });
-    y -= 20;
-    page.drawText(`€ ${totals.totalWithIva.toFixed(2)}`, { x: marginLeft + 100, y, size: fontSize, font });
-
-    const pdfBytes = await pdfDoc.save();
-    return pdfBytes;
+function writeFileAtomic(targetPath, buffer) {
+    const dir = path.dirname(targetPath);
+    ensureDir(dir);
+    const tmp = path.join(dir, `.${path.basename(targetPath)}.tmp`);
+    fs.writeFileSync(tmp, buffer);
+    fs.renameSync(tmp, targetPath);
+}
+function safe(v) { return v == null ? "" : String(v); }
+function safeMoney(n) {
+    const num = Number(n);
+    return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+}
+function safeHours(h) {
+    const n = Number(h);
+    if (!Number.isFinite(n)) return "0.0 h";
+    // show up to one decimal if .0, else two decimals
+    const str = (Math.round(n * 100) / 100).toString();
+    return `${str} h`;
 }
 
-// IPC handler to export to PDF
-ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
-    try {
-        console.log("Exporting PDF to path:", targetPath);
-        console.log("Received data:", data);
-
-        if (!targetPath) {
-            throw new Error("targetPath is required");
-        }
-
-        const pdfBytes = await createPdfFromQuote(data);
-
-        // Ensure the target directory exists
-        const dir = path.dirname(targetPath);
-        ensureDir(dir);
-
-        // Write the PDF to the target path
-        fs.writeFileSync(targetPath, pdfBytes);
-
-        return { ok: true };
-    } catch (err) {
-        console.error("Error exporting PDF:", err);
-        return { ok: false, error: err.message || String(err) };
-    }
-});
-
-// IPC handler to choose save path
+// -------------------------------
+// Choose PDF save path
+// -------------------------------
 ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
     try {
-        const defaultFilename = typeof defaultName === "string" ? defaultName : "quote.pdf";
+        const defaultFilename =
+            typeof defaultName === "string" && defaultName.trim()
+                ? defaultName.trim()
+                : "quote.pdf";
 
         const result = await dialog.showSaveDialog({
             title: "Save Quote as PDF",
@@ -185,15 +50,201 @@ ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
             filters: [{ name: "PDF", extensions: ["pdf"] }],
         });
 
-        console.log("Save dialog result:", result);
-
         if (result.canceled) {
+            console.log("[ipcPdf] Save dialog canceled");
             return { ok: false, canceled: true };
-        } else {
-            return { ok: true, path: result.filePath };
         }
+        console.log("[ipcPdf] Save dialog path:", result.filePath);
+        return { ok: true, path: result.filePath };
     } catch (err) {
-        console.error("Error in choose-pdf-save-path:", err);
+        console.error("[ipcPdf] choose-pdf-save-path error:", err);
         return { ok: false, error: err.message || String(err) };
+    }
+});
+
+// -------------------------------
+// Export to PDF via Chromium printToPDF
+// -------------------------------
+ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
+    let win;
+    console.time("[ipcPdf] export-to-pdf");
+    try {
+        console.log("[ipcPdf] START export-to-pdf");
+        if (!targetPath) throw new Error("targetPath is required");
+        if (!data || typeof data !== "object") {
+            throw new Error("data is required and must be an object");
+        }
+
+        // Resolve template & css & logo
+        const templatePath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.html");
+        const cssPath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.css");
+        const logoPath = path.join(__dirname, "..", "assets", "logo_carrozzeria.png");
+
+        console.log("[ipcPdf] templatePath:", templatePath);
+        console.log("[ipcPdf] cssPath:", cssPath);
+        console.log("[ipcPdf] logoPath:", logoPath);
+
+        let htmlContent = readText(templatePath);
+        const cssContent = readText(cssPath);
+
+        // Inline CSS
+        const linkRegex = /<link[^>]+href=["']file:\/\/\{\{cssPath\}\}["'][^>]*>\s*/i;
+        if (linkRegex.test(htmlContent)) {
+            htmlContent = htmlContent.replace(linkRegex, `<style>\n${cssContent}\n</style>\n`);
+        } else {
+            htmlContent = htmlContent.replace(/<\/head>/i, `<style>\n${cssContent}\n</style>\n</head>`);
+        }
+
+        // Inline logo as data URL (works on data: page)
+        let logoDataUrl = "";
+        try {
+            const buf = readBinary(logoPath);
+            const b64 = buf.toString("base64");
+            logoDataUrl = `data:image/png;base64,${b64}`;
+        } catch (e) {
+            console.warn("[ipcPdf] logo load failed:", e?.message || e);
+        }
+        htmlContent = htmlContent.replace(/\{\{logoDataUrl\}\}/g, safe(logoDataUrl));
+
+        // Inject data
+        const g = data.general || {};
+        const items = Array.isArray(data.items) ? data.items : [];
+        const comp = data.complementary || {};
+        const totals = data.totals || {};
+
+        htmlContent = htmlContent
+            .replace(/\{\{client\}\}/g, safe(g.client))
+            .replace(/\{\{licensePlate\}\}/g, safe(g.licensePlate))
+            .replace(/\{\{model\}\}/g, safe(g.model))
+            .replace(/\{\{year\}\}/g, safe(g.year))
+            .replace(/\{\{chassis\}\}/g, safe(g.chassis))
+            .replace(/\{\{insurance\}\}/g, safe(g.insurance))
+            .replace(/\{\{quoteDate\}\}/g, safe(g.quoteDate));
+
+        // Items rows
+        let itemsHtml = "";
+        for (const it of items) {
+            itemsHtml += `
+        <tr>
+          <td>${safe(it?.source ?? "—")}</td>
+          <td>${safe(it?.description ?? "—")}</td>
+          <td>${safe(it?.SR ?? 0)}</td>
+          <td>${safe(it?.LA ?? 0)}</td>
+          <td>${safe(it?.VE ?? 0)}</td>
+          <td>${safe(it?.ME ?? 0)}</td>
+          <td>${safe(it?.quantity ?? 0)}</td>
+          <td>€${safeMoney(it?.price ?? 0)}</td>
+          <td>€${safeMoney(it?.total ?? 0)}</td>
+        </tr>`;
+        }
+        htmlContent = htmlContent.replace(/\{\{items\}\}/g, itemsHtml);
+
+        // === Complementary (Option 2): inject ONLY JSON, HTML builds itself ===
+        let compJson = "{}";
+        try {
+            compJson = JSON.stringify(comp || {});
+        } catch (e) {
+            console.warn("[ipcPdf] complementary JSON stringify failed:", e?.message || e);
+        }
+        htmlContent = htmlContent.replace(/\{\{complementary_json\}\}/g, compJson);
+
+        // Totals
+        htmlContent = htmlContent
+            .replace(/\{\{subtotal\}\}/g, safeMoney(totals.subtotal))
+            .replace(/\{\{iva\}\}/g, safeMoney(totals.iva))
+            .replace(/\{\{totalWithIva\}\}/g, safeMoney(totals.totalWithIva));
+
+        // Hidden window and load
+        win = new BrowserWindow({
+            show: false,
+            webPreferences: { nodeIntegration: false, contextIsolation: true },
+        });
+
+        // Robust load/error hooks + watchdog
+        const loadTimeoutMs = 15000;
+        const printTimeoutMs = 20000;
+
+        const once = (emitter, event) => new Promise((resolve) => emitter.once(event, resolve));
+
+        let loadTimer;
+        const loadWatchdog = new Promise((_, reject) => {
+            loadTimer = setTimeout(() => {
+                reject(new Error(`Timeout waiting for did-finish-load after ${loadTimeoutMs}ms`));
+            }, loadTimeoutMs);
+        });
+
+        const failLoadPromise = new Promise((_, reject) => {
+            win.webContents.once("did-fail-load", (_e, code, desc, url) => {
+                reject(new Error(`did-fail-load ${code}: ${desc} @ ${url}`));
+            });
+        });
+
+        const crashedPromise = new Promise((_, reject) => {
+            win.webContents.once("crashed", () => reject(new Error("webContents crashed")));
+            win.once("unresponsive", () => reject(new Error("BrowserWindow unresponsive")));
+            win.webContents.once("render-process-gone", (_e, details) => {
+                reject(new Error(`render-process-gone: ${details?.reason || "unknown"}`));
+            });
+        });
+
+        const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
+        console.log("[ipcPdf] loadURL(data:...)");
+        const navPromise = win.loadURL(dataUrl).catch((err) => {
+            throw new Error(`loadURL error: ${err?.message || String(err)}`);
+        });
+
+        await Promise.race([
+            once(win.webContents, "did-finish-load"),
+            failLoadPromise,
+            crashedPromise,
+            loadWatchdog,
+            navPromise,
+        ]);
+        clearTimeout(loadTimer);
+        console.log("[ipcPdf] did-finish-load");
+
+        // Fonts readiness (best-effort)
+        try {
+            await win.webContents.executeJavaScript(
+                `(async () => { try { if (document.fonts && document.fonts.ready) { await document.fonts.ready; } } catch(e){} return true; })();`,
+                true
+            );
+        } catch { }
+
+        // Print to PDF with watchdog
+        let printTimer;
+        const printWatchdog = new Promise((_, reject) => {
+            printTimer = setTimeout(() => {
+                reject(new Error(`Timeout waiting for printToPDF after ${printTimeoutMs}ms`));
+            }, printTimeoutMs);
+        });
+
+        console.log("[ipcPdf] printToPDF start");
+        const pdfBufferPromise = win.webContents.printToPDF({
+            printBackground: true,
+            pageSize: "A4",
+            marginsType: 0,
+            landscape: false,
+        });
+
+        const pdfBuffer = await Promise.race([pdfBufferPromise, printWatchdog]);
+        clearTimeout(printTimer);
+
+        const byteLen = Buffer.isBuffer(pdfBuffer) ? pdfBuffer.length : (pdfBuffer?.byteLength || 0);
+        if (!pdfBuffer || byteLen === 0) throw new Error("printToPDF returned an empty buffer");
+
+        // Write atomically
+        writeFileAtomic(targetPath, Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer));
+        console.timeEnd("[ipcPdf] export-to-pdf");
+        return { ok: true, path: targetPath, bytes: byteLen };
+    } catch (err) {
+        console.timeEnd("[ipcPdf] export-to-pdf");
+        console.error("[ipcPdf] export-to-pdf error:", err);
+        return { ok: false, error: err.message || String(err) };
+    } finally {
+        if (win && !win.isDestroyed()) {
+            win.close();
+            console.log("[ipcPdf] window closed");
+        }
     }
 });

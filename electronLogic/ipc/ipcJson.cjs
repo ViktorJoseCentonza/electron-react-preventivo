@@ -1,3 +1,4 @@
+// ipc/ipcjson.cjs
 const { ipcMain, dialog, app } = require("electron");
 const fs = require("fs");
 const path = require("path");
@@ -36,7 +37,7 @@ function sanitizeFilename(name) {
 }
 
 function withJsonExtension(filename) {
-    return filename.endsWith(".json") ? filename : `${filename}.json`;
+    return filename && filename.toLowerCase().endsWith(".json") ? filename : `${filename}.json`;
 }
 
 /** Atomic write: write to temp file then rename */
@@ -67,41 +68,122 @@ function listJsonFiles() {
         .map((d) => d.name);
 }
 
+/** Safe getter for nested fields with legacy/modern shapes */
+function getContainer(raw) {
+    // If file structure is { quote: {...}, items, complementary, totals }
+    // use raw.quote as the container for the general fields.
+    if (raw && typeof raw === "object" && raw.quote && typeof raw.quote === "object") {
+        return raw.quote;
+    }
+    // Otherwise, assume raw itself might contain general fields
+    return raw || {};
+}
+
 /** Project-level "schema" normalizer (lenient):
- * Accept both legacy flat and new structured formats; return a normalized object
- * so search and preview remain resilient.
+ * Accept legacy flat, {quote:{...}}, and new structured formats; return a normalized object
+ * so list/search/preview remain resilient.
  */
 function normalizeQuoteForSearch(raw) {
-    if (!raw || typeof raw !== "object") return { general: {}, items: [], complementary: {}, totals: {} };
+    if (!raw || typeof raw !== "object") {
+        return { general: {}, items: [], complementary: {}, totals: {} };
+    }
 
-    // Newer structure (contexts/QuoteDataContext default)
+    const container = getContainer(raw); // where general fields likely live
+
+    // GENERAL (prefer container.general, else fields on container)
     const general =
-        raw.general ||
-        {
-            client: raw.client,
-            licensePlate: raw.licensePlate,
-            model: raw.model,
-            year: raw.year,
-            chassis: raw.chassis,
-            insurance: raw.insurance,
-            quoteDate: raw.quoteDate,
+        (container.general && typeof container.general === "object" ? container.general : null) || {
+            client: container.client,
+            licensePlate: container.licensePlate,
+            model: container.model,
+            year: container.year,
+            chassis: container.chassis,
+            insurance: container.insurance,
+            quoteDate: container.quoteDate,
         };
 
-    const items = Array.isArray(raw.items) ? raw.items : raw.items?.items || [];
+    // ITEMS can be top-level raw.items OR inside container.items
+    const items =
+        (Array.isArray(raw.items) && raw.items) ||
+        (Array.isArray(container.items) && container.items) ||
+        [];
 
+    // COMPLEMENTARY may live at top-level or inside container
     const complementary =
-        raw.complementary ||
+        (raw.complementary && typeof raw.complementary === "object" && raw.complementary) ||
+        (container.complementary && typeof container.complementary === "object" && container.complementary) ||
         {
-            parts: raw.parts,
-            bodywork: raw.bodywork,
-            mechanics: raw.mechanics,
-            consumables: raw.consumables,
-            partsTotal: raw.partsTotal,
+            parts: container.parts || raw.parts,
+            bodywork: container.bodywork || raw.bodywork,
+            mechanics: container.mechanics || raw.mechanics,
+            consumables: container.consumables || raw.consumables,
+            partsTotal: container.partsTotal || raw.partsTotal,
         };
 
-    const totals = raw.totals || raw.totalQuote || {};
+    // TOTALS may live at top-level or inside container
+    const totals =
+        (raw.totals && typeof raw.totals === "object" && raw.totals) ||
+        (container.totals && typeof container.totals === "object" && container.totals) ||
+        raw.totalQuote ||
+        container.totalQuote ||
+        {};
 
-    return { general: general || {}, items: items || [], complementary: complementary || {}, totals: totals || {} };
+    return {
+        general: general || {},
+        items: items || [],
+        complementary: complementary || {},
+        totals: totals || {},
+    };
+}
+
+/** YYYY-MM-DD for today */
+function todayISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function coalesceFirst(list, predicate) {
+    for (const v of list) {
+        if (predicate(v)) return v;
+    }
+    return null;
+}
+
+/** Derive a suggested filename from data using your priority and date.
+ * Priority (take first two available): licensePlate, model, client, chassis, year, insurance
+ * Suffix with date (YYYY-MM-DD).
+ */
+function suggestFileNameFromData(dataObj) {
+    const normalized = normalizeQuoteForSearch(dataObj || {});
+    const g = normalized.general || {};
+    const date = coalesceFirst(
+        [g.quoteDate, todayISO()],
+        (s) => typeof s === "string" && s.length > 0
+    );
+
+    const partsInPriority = [
+        g.licensePlate,
+        g.model,
+        g.client,
+        g.chassis,
+        g.year,
+        g.insurance,
+    ].filter((x) => !!(typeof x === "string" ? x.trim() : x));
+
+    const p1 = partsInPriority[0] || "preventivo";
+    const p2 = partsInPriority[1] || null;
+
+    const joinName = p2 ? `${p1} ${p2}` : `${p1}`;
+    const safeBase = sanitizeFilename(joinName).replace(/\.json$/i, "");
+    const fileName = `${safeBase}_${date}`;
+    return withJsonExtension(fileName);
+}
+
+function nullable(v) {
+    return v == null ? null : v;
 }
 
 // ----------------------------
@@ -131,15 +213,16 @@ ipcMain.handle("quotes:list", async () => {
                 return {
                     file,
                     preview: {
-                        client: general.client ?? null,
-                        licensePlate: general.licensePlate ?? null,
-                        model: general.model ?? null,
-                        year: general.year ?? null,
-                        insurance: general.insurance ?? null,
-                        quoteDate: general.quoteDate ?? null,
+                        client: nullable(general.client),
+                        licensePlate: nullable(general.licensePlate),
+                        model: nullable(general.model),
+                        year: nullable(general.year),
+                        chassis: nullable(general.chassis),       // ADDED to preview
+                        insurance: nullable(general.insurance),   // already present earlier, keep it
+                        quoteDate: nullable(general.quoteDate),
                         totalWithIva: totals?.totalWithIva ?? null,
                     },
-                    _fileName: file // Include the filename in the quote object
+                    _fileName: file, // keep existing field as you had
                 };
             } catch (err) {
                 console.warn("[ipcJson] Failed to parse file during list:", file, err);
@@ -161,7 +244,7 @@ ipcMain.handle("quotes:read", async (_event, fileName) => {
         const filePath = path.join(jsonDir, safe);
         if (!fs.existsSync(filePath)) return { ok: false, error: "File not found" };
         const data = readJSONSafe(filePath);
-        return { ok: true, data, _fileName: safe }; // Include the filename in the data object
+        return { ok: true, data, _fileName: safe }; // Include the filename alongside data
     } catch (err) {
         return { ok: false, error: `Failed to read quote: ${err.message}` };
     }
@@ -170,16 +253,21 @@ ipcMain.handle("quotes:read", async (_event, fileName) => {
 /** Write/Save quote into jsonDir with given filename */
 ipcMain.handle("quotes:write", async (_event, { filename, data }) => {
     try {
-        if (!filename) throw new Error("filename is required");
         if (typeof data !== "object" || data == null) throw new Error("data must be an object");
 
-        // Add the fileName to the quote data before saving
-        const safe = withJsonExtension(sanitizeFilename(filename));
-        data._fileName = safe; // Add _fileName field to the quote object
+        // If filename missing or trivial, derive based on your priority
+        let desired = filename && String(filename).trim();
+        if (!desired || desired.toLowerCase() === "preventivo" || desired === ".json") {
+            desired = suggestFileNameFromData(data);
+        }
+        const safe = withJsonExtension(sanitizeFilename(desired));
+
+        // also keep _fileName in the saved payload (your existing behavior)
+        data._fileName = safe;
 
         const filePath = path.join(jsonDir, safe);
         writeJSONAtomic(filePath, data);
-        return { ok: true, path: filePath };
+        return { ok: true, path: filePath, file: safe };
     } catch (err) {
         return { ok: false, error: `Failed to save quote: ${err.message}` };
     }
@@ -188,15 +276,18 @@ ipcMain.handle("quotes:write", async (_event, { filename, data }) => {
 /** Autosave helper (same as WRITE, separate channel for clarity/telemetry) */
 ipcMain.handle("quotes:auto-save", async (_event, { filename, data }) => {
     try {
-        if (!filename) throw new Error("filename is required");
         if (typeof data !== "object" || data == null) throw new Error("data must be an object");
 
-        const safe = withJsonExtension(sanitizeFilename(filename));
-        data._fileName = safe; // Add _fileName field to the quote object
+        let desired = filename && String(filename).trim();
+        if (!desired || desired.toLowerCase() === "preventivo" || desired === ".json") {
+            desired = suggestFileNameFromData(data);
+        }
+        const safe = withJsonExtension(sanitizeFilename(desired));
+        data._fileName = safe;
 
         const filePath = path.join(jsonDir, safe);
         writeJSONAtomic(filePath, data);
-        return { ok: true, path: filePath };
+        return { ok: true, path: filePath, file: safe };
     } catch (err) {
         return { ok: false, error: `Failed to auto-save quote: ${err.message}` };
     }
@@ -336,6 +427,8 @@ ipcMain.handle("quotes:search", async (_event, searchQuery) => {
                             licensePlate: general.licensePlate ?? null,
                             model: general.model ?? null,
                             year: general.year ?? null,
+                            chassis: general.chassis ?? null,       // ADDED to search preview
+                            insurance: general.insurance ?? null,   // ADDED to search preview
                             quoteDate: general.quoteDate ?? null,
                             totalWithIva: totals?.totalWithIva ?? null,
                         },

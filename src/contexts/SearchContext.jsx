@@ -15,8 +15,13 @@ export function SearchProvider({ children }) {
         }
 
         try {
-            const matches = await window.api.searchQuotes(q);
-            setResults(matches);
+            const res = await window.api.quotes.search(q);
+            if (res?.ok) {
+                setResults(res.matches || []);
+            } else {
+                console.error(res?.error || "quotes:search returned not ok");
+                setResults([]);
+            }
         } catch (err) {
             console.error("Search failed:", err);
             setResults([]);
