@@ -81,14 +81,30 @@ function resolveLogoPath() {
 // -------------------------------
 ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
     try {
-        const defaultFilename =
-            typeof defaultName === "string" && defaultName.trim()
-                ? defaultName.trim()
-                : "quote.pdf";
+        let defaultPath = "quote.pdf";
+
+        if (typeof defaultName === "string" && defaultName.trim()) {
+            const trimmed = defaultName.trim();
+
+            // Heuristic: if it looks like a path, preserve its directory
+            const looksLikePath =
+                trimmed.includes(path.sep) || trimmed.includes("/") || trimmed.includes("\\");
+
+            if (looksLikePath) {
+                const dir = path.dirname(trimmed);
+                const base = path.basename(trimmed);
+                const nameWithoutExt = base.replace(/\.[^/.]+$/, ""); // strip last extension
+                const pdfName = `${nameWithoutExt || base}.pdf`;
+                defaultPath = path.join(dir, pdfName);
+            } else {
+                const nameWithoutExt = trimmed.replace(/\.[^/.]+$/, "");
+                defaultPath = `${nameWithoutExt || trimmed}.pdf`;
+            }
+        }
 
         const result = await dialog.showSaveDialog({
             title: "Save Quote as PDF",
-            defaultPath: defaultFilename,
+            defaultPath,
             filters: [{ name: "PDF", extensions: ["pdf"] }],
         });
 
@@ -316,7 +332,10 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         if (!pdfBuffer || byteLen === 0) throw new Error("printToPDF returned an empty buffer");
 
         // Write atomically
-        writeFileAtomic(targetPath, Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer));
+        writeFileAtomic(
+            targetPath,
+            Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer)
+        );
         console.timeEnd("[ipcPdf] export-to-pdf");
         return { ok: true, path: targetPath, bytes: byteLen };
     } catch (err) {
