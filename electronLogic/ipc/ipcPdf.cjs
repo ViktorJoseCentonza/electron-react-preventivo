@@ -1,4 +1,4 @@
-const { ipcMain, dialog, BrowserWindow } = require("electron");
+const { app, ipcMain, dialog, BrowserWindow } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
@@ -11,8 +11,12 @@ function ensureDir(dirPath) {
         throw err;
     }
 }
-function readText(filePath) { return fs.readFileSync(filePath, "utf8"); }
-function readBinary(filePath) { return fs.readFileSync(filePath); }
+function readText(filePath) {
+    return fs.readFileSync(filePath, "utf8");
+}
+function readBinary(filePath) {
+    return fs.readFileSync(filePath);
+}
 
 function writeFileAtomic(targetPath, buffer) {
     const dir = path.dirname(targetPath);
@@ -21,7 +25,9 @@ function writeFileAtomic(targetPath, buffer) {
     fs.writeFileSync(tmp, buffer);
     fs.renameSync(tmp, targetPath);
 }
-function safe(v) { return v == null ? "" : String(v); }
+function safe(v) {
+    return v == null ? "" : String(v);
+}
 function safeMoney(n) {
     const num = Number(n);
     return Number.isFinite(num) ? num.toFixed(2) : "0.00";
@@ -29,9 +35,45 @@ function safeMoney(n) {
 function safeHours(h) {
     const n = Number(h);
     if (!Number.isFinite(n)) return "0.0 h";
-    // show up to one decimal if .0, else two decimals
     const str = (Math.round(n * 100) / 100).toString();
     return `${str} h`;
+}
+
+// For hours / percentages: up to 2 decimals, but no trailing .00 if integer
+function safeNumber2(n) {
+    const num = Number(n);
+    if (!Number.isFinite(num)) return "";
+    const rounded = Math.round(num * 100) / 100;
+    return String(rounded);
+}
+
+// Resolve logo path for dev + prod
+function resolveLogoPath() {
+    const appRoot = app.getAppPath();
+    const candidates = [];
+
+    if (!app.isPackaged) {
+        // Dev: run with `electron .`, project root is appRoot
+        candidates.push(path.join(appRoot, "src", "assets", "logo_carrozzeria.png"));
+    }
+
+    // Fallbacks: if you ever move or copy it differently
+    candidates.push(path.join(appRoot, "assets", "logo_carrozzeria.png"));
+
+    // Prod: electron-builder extraResources -> process.resourcesPath
+    if (process.resourcesPath) {
+        candidates.push(path.join(process.resourcesPath, "assets", "logo_carrozzeria.png"));
+    }
+
+    for (const p of candidates) {
+        if (fs.existsSync(p)) {
+            console.log("[ipcPdf] Using logo:", p);
+            return p;
+        }
+    }
+
+    console.warn("[ipcPdf] No logo found. Tried:", candidates);
+    return null;
 }
 
 // -------------------------------
@@ -75,14 +117,15 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             throw new Error("data is required and must be an object");
         }
 
-        // Resolve template & css & logo
+        // Resolve template & css
         const templatePath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.html");
         const cssPath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.css");
-        const logoPath = path.join(__dirname, "..", "assets", "logo_carrozzeria.png");
+
+        // Resolve logo
+        const logoPath = resolveLogoPath();
 
         console.log("[ipcPdf] templatePath:", templatePath);
         console.log("[ipcPdf] cssPath:", cssPath);
-        console.log("[ipcPdf] logoPath:", logoPath);
 
         let htmlContent = readText(templatePath);
         const cssContent = readText(cssPath);
@@ -92,22 +135,27 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         if (linkRegex.test(htmlContent)) {
             htmlContent = htmlContent.replace(linkRegex, `<style>\n${cssContent}\n</style>\n`);
         } else {
-            htmlContent = htmlContent.replace(/<\/head>/i, `<style>\n${cssContent}\n</style>\n</head>`);
+            htmlContent = htmlContent.replace(
+                /<\/head>/i,
+                `<style>\n${cssContent}\n</style>\n</head>`
+            );
         }
 
         // Inline logo as data URL (works on data: page)
         let logoDataUrl = "";
-        try {
-            const buf = readBinary(logoPath);
-            const b64 = buf.toString("base64");
-            logoDataUrl = `data:image/png;base64,${b64}`;
-        } catch (e) {
-            console.warn("[ipcPdf] logo load failed:", e?.message || e);
+        if (logoPath) {
+            try {
+                const buf = readBinary(logoPath);
+                const b64 = buf.toString("base64");
+                logoDataUrl = `data:image/png;base64,${b64}`;
+            } catch (e) {
+                console.warn("[ipcPdf] logo load failed:", e?.message || e);
+            }
         }
         htmlContent = htmlContent.replace(/\{\{logoDataUrl\}\}/g, safe(logoDataUrl));
 
         // Inject data
-        const g = data.general || {};
+        const g = data.general || data.quote || {};
         const items = Array.isArray(data.items) ? data.items : [];
         const comp = data.complementary || {};
         const totals = data.totals || {};
@@ -139,14 +187,48 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         }
         htmlContent = htmlContent.replace(/\{\{items\}\}/g, itemsHtml);
 
-        // === Complementary (Option 2): inject ONLY JSON, HTML builds itself ===
-        let compJson = "{}";
-        try {
-            compJson = JSON.stringify(comp || {});
-        } catch (e) {
-            console.warn("[ipcPdf] complementary JSON stringify failed:", e?.message || e);
+        // === Complementary: fill known rows directly into placeholders ===
+        function fillComplementaryRow(prefix, obj) {
+            let quantity = "";
+            let price = "";
+            let tax = "";
+            let total = "";
+            let taxable = "";
+            let taxAmount = "";
+            let totalWithTax = "";
+
+            if (obj && typeof obj === "object") {
+                quantity = safeNumber2(obj.quantity);
+                price = safeMoney(obj.price);
+                tax = safeNumber2(obj.tax); // IVA %
+                total = safeMoney(obj.total);
+                taxable = safeMoney(obj.taxable);
+                taxAmount = safeMoney(obj.taxAmount); // Imposta
+                totalWithTax = safeMoney(obj.totalWithTax);
+            }
+
+            const map = {
+                quantity,
+                price,
+                tax,
+                total,
+                taxable,
+                taxAmount,
+                totalWithTax,
+            };
+
+            for (const [key, value] of Object.entries(map)) {
+                const re = new RegExp(`\\{\\{${prefix}_${key}\\}\\}`, "g");
+                htmlContent = htmlContent.replace(re, safe(value));
+            }
         }
-        htmlContent = htmlContent.replace(/\{\{complementary_json\}\}/g, compJson);
+
+        // Map JSON → rows
+        fillComplementaryRow("partsTotal", comp.partsTotal);
+        fillComplementaryRow("parts", comp.parts);
+        fillComplementaryRow("bodywork", comp.bodywork);
+        fillComplementaryRow("mechanics", comp.mechanics);
+        fillComplementaryRow("consumables", comp.consumables);
 
         // Totals
         htmlContent = htmlContent
@@ -230,7 +312,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         const pdfBuffer = await Promise.race([pdfBufferPromise, printWatchdog]);
         clearTimeout(printTimer);
 
-        const byteLen = Buffer.isBuffer(pdfBuffer) ? pdfBuffer.length : (pdfBuffer?.byteLength || 0);
+        const byteLen = Buffer.isBuffer(pdfBuffer) ? pdfBuffer.length : pdfBuffer?.byteLength || 0;
         if (!pdfBuffer || byteLen === 0) throw new Error("printToPDF returned an empty buffer");
 
         // Write atomically

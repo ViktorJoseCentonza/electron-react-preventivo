@@ -1,6 +1,6 @@
 /* === Print setup =========================================================== */
 @page {
-    margin: 16mm;
+    margin: 4mm 8mm;
 }
 
 html,
@@ -21,7 +21,6 @@ body {
     font-family: "Inter", Arial, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Helvetica, sans-serif;
     font-variant-numeric: tabular-nums lining-nums;
     color: #1b2333;
-    background: #f6f8fb;
     margin: 0;
 }
 
@@ -35,21 +34,33 @@ body {
     --soft: #f3f6fc;
     --brand: #0f6ad6;
     --brand-600: #0b57b0;
+    --title: #008812;
+}
+
+.d-flex {
+    display: flex;
+}
+
+/* Prevent placeholder tokens from being split */
+.ph {
+    white-space: nowrap;
 }
 
 /* Page */
 .page {
     background: var(--bg);
     border: 1px solid var(--line);
-    padding: 20px 22px 26px;
+    padding: 12px 18px;
     border-radius: 10px;
     box-shadow: 0 0 0 2px #fff inset;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Header */
 .header {
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    justify-content: space-between;
     gap: 20px;
     align-items: center;
     border-bottom: 2px dashed var(--line-strong);
@@ -58,19 +69,15 @@ body {
 }
 
 .identity {
-    display: grid;
-    grid-template-columns: 76px 1fr;
-    gap: 12px;
+    display: flex;
+    flex-direction: row;
     align-items: center;
+    gap: 12px;
 }
 
 .logo {
-    width: 76px;
-    height: 76px;
-    object-fit: contain;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: #fff;
+    width: 150px;
+    height: auto;
 }
 
 .brand-name {
@@ -87,81 +94,67 @@ body {
     font-size: 11.5px;
 }
 
-.doc-info {
-    display: grid;
-    gap: 8px;
-    align-content: start;
-    justify-items: end;
-}
-
 .doc-title {
-    font-size: 14px;
+    font-size: 25px;
     font-weight: 800;
-    color: var(--brand-600);
+    color: var(--title);
     letter-spacing: .6px;
 }
 
-.meta-grid {
-    display: grid;
-    gap: 6px;
-    min-width: 280px;
-}
-
-.meta-line {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 8px;
-    align-items: center;
-}
-
-.meta-label {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.meta-value {
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 12px;
-}
-
-/* Panel cards (white, pill layout) */
-.panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+/* Panel / sections */
+.panel,
+.section {
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     margin-top: 12px;
+    width: 100%;
 }
 
+/* Card container: used for veicolo/cliente and for totals rows */
 .card {
     border: 1px solid var(--line-strong);
     border-radius: 12px;
     background: #fff;
     padding: 12px;
+    flex: 1 1 0;
+    min-width: 260px;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
 }
 
 .card-title {
     font-weight: 800;
     font-size: 12.5px;
     color: var(--brand-600);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    flex: 0 0 100%;
 }
 
+/* Info grid (veicolo + cliente) */
 .kv-grid {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+    flex: 1 1 0;
+    min-width: 220px;
 }
 
 .kv-row {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 10px;
+    display: flex;
     align-items: center;
+    gap: 10px;
 }
 
 .kv-label {
-    color: var(--muted);
+    color: var(--ink);
     font-size: 11px;
+    font-weight: 800;
+    width: 140px;
+    flex-shrink: 0;
 }
 
 .kv-pill {
@@ -176,10 +169,12 @@ body {
 .pill-wrap {
     display: inline-flex;
     align-items: center;
+    height: 34px;
+    width: 100px;
     gap: 6px;
     border: 1px solid var(--line-strong);
     border-radius: 10px;
-    padding: 6px 8px;
+    padding: 2px 4px;
     background: #fff;
     max-width: 100%;
     overflow: hidden;
@@ -194,71 +189,82 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-}
-
-.pill-suffix {
-    display: inline-flex;
-    align-items: center;
+    /* testing */
+    display: flex;
     justify-content: center;
-    padding: 4px 6px;
-    border-left: 1px solid var(--line-strong);
-    font-weight: 700;
-    font-size: 11.5px;
-    color: #24334c;
-    border-radius: 0 8px 8px 0;
+    width: 100%;
 }
 
-/* Table card header (to match screenshot structure) */
+/* Euro suffix */
+.pill-wrap.euro .pill::after {
+    content: " €";
+    font-weight: 700;
+    margin-left: 4px;
+}
+
+/* Table card (contenitore della tabella articoli) */
 .table-card {
     border: 1px solid var(--line-strong);
     border-radius: 12px;
     background: #fff;
-}
-
-.table-head {
-    display: grid;
-    grid-template-columns: 12% 34% repeat(4, 6.5%) 7% 12% 12%;
-    gap: 0;
-    padding: 10px 12px;
-    font-weight: 800;
-    font-size: 11.5px;
-    color: #1b2b44;
-    border-bottom: 1px dashed var(--line);
+    flex: 1 1 100%;
+    width: 100%;
+    overflow: hidden;
 }
 
 /* Items table */
 table.items {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 8px;
-    padding: 8px 12px 12px;
+    border-spacing: 0;
 }
 
-table.items tr {
+/* Header row della tabella */
+table.items thead th {
+    padding: 10px 12px;
+    font-weight: 800;
+    font-size: 11.5px;
+    color: #1b2b44;
+    border-bottom: 1px dashed var(--line);
+    background: #fff;
+}
+
+/* Allineamenti header */
+table.items thead th:nth-child(3),
+table.items thead th:nth-child(4),
+table.items thead th:nth-child(5),
+table.items thead th:nth-child(6) {
+    text-align: center;
+}
+
+table.items thead th:nth-child(7),
+table.items thead th:nth-child(8),
+table.items thead th:nth-child(9) {
+    text-align: right;
+}
+
+/* Body righe */
+table.items tbody {
+    background: #fff;
+}
+
+table.items tbody tr {
     background: #fff;
 }
 
 table.items td {
-    padding: 8px 10px;
+    padding: 8px 12px;
     font-size: 11.5px;
     vertical-align: middle;
     color: #1d2a40;
-    border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
 }
 
-table.items td:first-child {
-    border-left: 1px solid var(--line);
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+table.items tbody tr:last-child td {
+    border-bottom: none;
 }
 
-table.items td:last-child {
-    border-right: 1px solid var(--line);
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-}
-
+/* Column widths */
 .col-fonte {
     width: 12%;
 }
@@ -285,72 +291,109 @@ table.items td:last-child {
     width: 12%;
 }
 
-table.items td:nth-child(7),
-table.items td:nth-child(8),
-table.items td:nth-child(9) {
+/* Numeri a destra nelle ultime colonne del body */
+table.items tbody td:nth-child(7),
+table.items tbody td:nth-child(8),
+table.items tbody td:nth-child(9) {
     text-align: right;
 }
 
-/* ===== This replaces the empty rules you saw ===== */
-table.items td:nth-child(7) .pill-wrap,
-table.items td:nth-child(8) .pill-wrap,
-table.items td:nth-child(9) .pill-wrap {
+/* Pills nelle celle numeriche allineate a destra */
+table.items tbody td:nth-child(7) .pill-wrap,
+table.items tbody td:nth-child(8) .pill-wrap,
+table.items tbody td:nth-child(9) .pill-wrap {
     margin-left: auto;
-    /* keep pills inside cell and right-aligned */
 }
 
-/* Section grid header like screenshot */
+/* Section grid header (Riepilogo lavorazioni) */
 .grid-head {
-    display: grid;
-    grid-template-columns: 1fr repeat(7, minmax(110px, 1fr));
-    gap: 10px;
-    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background: #fff;
     border: 1px dashed var(--line-strong);
     border-radius: 12px;
-    background: #fff;
-    color: #1b2b44;
+    padding: 10px 12px;
+    gap: 12px;
+    margin-top: 8px;
     font-weight: 800;
     font-size: 11.5px;
-    margin-top: 8px;
+    color: #1b2b44;
 }
 
+/* Prima colonna nell'header (vuota ma allineata al titolo delle righe) */
+.grid-head .row-name {
+    width: 130px;
+    flex-shrink: 0;
+}
 
-/* Row cards (white, with pills that never spill out) */
+/* Colonne di testo dell'header sul lato destro */
+.grid-head .gh {
+    flex: 1 1 0;
+    text-align: center;
+    min-width: 0;
+}
+
+/* Row cards container (Riepilogo lavorazioni) */
 .row-list {
     margin-top: 10px;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
+/* Each row in the summary */
 .row-card {
-    display: grid;
-    grid-template-columns: 1fr repeat(7, minmax(110px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 6px;
+    padding: 8px 12px;
     border: 1px solid var(--line-strong);
     border-radius: 12px;
     background: #fff;
 }
 
+/* Fixed-width column for the row title */
 .row-name {
+    width: 130px;
+    flex-shrink: 0;
     font-weight: 700;
     color: #1b2333;
 }
 
+/* Celle dati nel riepilogo lavorazioni */
+.pill-cell {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Pills inside cells align nicely */
+.row-card .pill-wrap {
+    margin: 0 auto;
+}
+
 /* Totals */
-/* Totals - single row layout */
 .totals {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    flex-wrap: wrap;
     gap: 12px;
     margin-top: 12px;
 }
 
 .totals .row-card {
-    display: grid;
-    grid-template-columns: 1fr minmax(140px, auto);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 12px 16px;
+    flex: 1 1 0;
+    min-width: 180px;
+}
+
+.totals .row-card .row-name {
+    width: auto;
+    flex: 1;
 }
 
 .totals .row-card .pill-wrap {
@@ -377,25 +420,6 @@ table.items td:nth-child(9) .pill-wrap {
     margin: 8px 0 0;
 }
 
-.sign-row {
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.sign-line {
-    flex: 0 0 220px;
-    height: 1px;
-    background: var(--line-strong);
-}
-
-.sign-label {
-    font-size: 10.5px;
-    color: #6b778c;
-}
-
 .footer-line {
     margin-top: 10px;
     height: 3px;
@@ -408,19 +432,4 @@ table.items td:nth-child(9) .pill-wrap {
     text-align: right;
     font-size: 9.5px;
     color: #8a98ae;
-}
-
-/* Small preview fallback */
-@media (max-width: 900px) {
-    .panel {
-        grid-template-columns: 1fr;
-    }
-
-    .grid-head {
-        grid-template-columns: 1fr repeat(7, minmax(90px, 1fr));
-    }
-
-    .row-card {
-        grid-template-columns: 1fr repeat(7, minmax(90px, 1fr));
-    }
 }

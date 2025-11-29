@@ -2,10 +2,11 @@
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preventivo</title>
-    <!-- inlined by ipc -->
+    <!-- CSS will be inlined by ipcPdf -->
+    <link rel="stylesheet" type="text/css" href="./pdfTemplate.css">
     <link rel="stylesheet" type="text/css" href="file://{{cssPath}}">
 </head>
 
@@ -15,52 +16,72 @@
         <!-- ===== Header ===== -->
         <header class="header">
             <div class="identity">
-                <img class="logo" src="{{logoDataUrl}}" alt="Logo Carrozzeria" />
-                <div class="brand">
-                    <h1 class="brand-name">CARROZZERIA TEAM</h1>
-                    <p class="brand-meta">
-                        Osteria del Bagno 14 · 47922 Rimini (RN)<br />
-                        339 223 39 41 · <a href="mailto:info@carrozzeriateam.it">info@carrozzeriateam.it</a><br />
-                        P.I. 02005990409
-                    </p>
-                </div>
+                <img class="logo" src="{{logoDataUrl}}" alt="Logo Carrozzeria">
             </div>
-
-            <div class="doc-info">
-                <div class="doc-title">PREVENTIVO</div>
-                <div class="meta-grid">
-                    <div class="meta-line"><span class="meta-label">Cliente</span><span
-                            class="meta-value">{{client}}</span></div>
-                    <div class="meta-line"><span class="meta-label">Assicurazione</span><span
-                            class="meta-value">{{insurance}}</span></div>
-                    <div class="meta-line"><span class="meta-label">Data preventivo</span><span
-                            class="meta-value">{{quoteDate}}</span>
-                    </div>
-                </div>
+            <div class="brand">
+                <h1 class="brand-name">CARROZZERIA TEAM</h1>
+                <p class="brand-meta">
+                    Osteria del Bagno 14 · 47922 Rimini (RN)<br>
+                    339 223 39 41 ·
+                    <a href="mailto:info@carrozzeriateam.it">info@carrozzeriateam.it</a><br>
+                    P.I. 02005990409
+                </p>
             </div>
+            <div class="doc-title">PREVENTIVO</div>
         </header>
 
-        <!-- ===== Vehicle ===== -->
+        <!-- ===== Vehicle + Client ===== -->
         <section class="panel">
-
             <div class="card">
-                <div class="card-title">Dati veicolo</div>
+                <div class="card-title">Dati veicolo / cliente</div>
+
+                <!-- Colonna sinistra: veicolo -->
                 <div class="kv-grid">
                     <div class="kv-row">
                         <div class="kv-label">Targa</div>
-                        <div class="kv-pill"><span class="pill">{{licensePlate}}</span></div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{licensePlate}}</span></span>
+                        </div>
                     </div>
                     <div class="kv-row">
                         <div class="kv-label">Modello</div>
-                        <div class="kv-pill"><span class="pill">{{model}}</span></div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{model}}</span></span>
+                        </div>
                     </div>
                     <div class="kv-row">
                         <div class="kv-label">Anno</div>
-                        <div class="kv-pill"><span class="pill">{{year}}</span></div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{year}}</span></span>
+                        </div>
                     </div>
                     <div class="kv-row">
                         <div class="kv-label">Telaio</div>
-                        <div class="kv-pill"><span class="pill">{{chassis}}</span></div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{chassis}}</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonna destra: cliente / assicurazione / data -->
+                <div class="kv-grid">
+                    <div class="kv-row">
+                        <div class="kv-label">Cliente</div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{client}}</span></span>
+                        </div>
+                    </div>
+                    <div class="kv-row">
+                        <div class="kv-label">Assicurazione</div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{insurance}}</span></span>
+                        </div>
+                    </div>
+                    <div class="kv-row">
+                        <div class="kv-label">Data preventivo</div>
+                        <div class="kv-pill">
+                            <span class="pill"><span class="ph">{{quoteDate}}</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -69,30 +90,31 @@
         <!-- ===== Items ===== -->
         <section class="panel">
             <div class="table-card">
-                <div class="table-head">
-                    <div>Citaz. fonte</div>
-                    <div>Descrizione</div>
-                    <div>SR</div>
-                    <div>LA</div>
-                    <div>VE</div>
-                    <div>ME</div>
-                    <div>Q.tà</div>
-                    <div>Prezzo</div>
-                    <div>Totale</div>
-                </div>
-
                 <table class="items">
                     <colgroup>
-                        <col class="col-fonte" />
-                        <col class="col-descrizione" />
-                        <col class="col-code" />
-                        <col class="col-code" />
-                        <col class="col-code" />
-                        <col class="col-code" />
-                        <col class="col-qty" />
-                        <col class="col-price" />
-                        <col class="col-total" />
+                        <col class="col-fonte">
+                        <col class="col-descrizione">
+                        <col class="col-code">
+                        <col class="col-code">
+                        <col class="col-code">
+                        <col class="col-code">
+                        <col class="col-qty">
+                        <col class="col-price">
+                        <col class="col-total">
                     </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Citaz. fonte</th>
+                            <th>Descrizione</th>
+                            <th>SR</th>
+                            <th>LA</th>
+                            <th>VE</th>
+                            <th>ME</th>
+                            <th>Q.tà</th>
+                            <th>Prezzo</th>
+                            <th>Totale</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {{items}}
                     </tbody>
@@ -101,85 +123,255 @@
         </section>
 
         <!-- ===== Riepilogo lavorazioni ===== -->
-        <section class="section">
+        <section class="summary-section">
             <div class="grid-head">
-                <div class="gh-spacer"></div>
+                <div class="row-name"></div>
                 <div class="gh">Ore</div>
                 <div class="gh">Prezzo</div>
                 <div class="gh">IVA %</div>
                 <div class="gh">Totale</div>
                 <div class="gh">Imponibile</div>
                 <div class="gh">Imposta</div>
-                <div class="gh">Totale IVA inclusa</div>
+                <div class="gh">Totale IVA incl.</div>
             </div>
 
-            <!-- Rows are built from JSON; HTML owns all markup/styling -->
-            <div class="row-list" id="work-rows"></div>
+            <div class="row-list">
 
-            <!-- JSON only; the HTML below renders it -->
-            <script id="complementary-json" type="application/json">{{complementary_json}}</script>
-            <script>
-                (function () {
-                    function m(n) { n = Number(n); return Number.isFinite(n) ? n.toFixed(2) : ""; }
-                    function h(n) { n = Number(n); if (!Number.isFinite(n)) return ""; return (Math.round(n * 100) / 100).toString(); }
-                    function pill(v, suffix) {
-                        var outer = document.createElement('div');
-                        outer.className = 'pill-wrap';
-                        var p = document.createElement('span'); p.className = 'pill'; p.textContent = v ?? '';
-                        outer.appendChild(p);
-                        if (suffix) {
-                            var s = document.createElement('span'); s.className = 'pill-suffix'; s.textContent = suffix;
-                            outer.appendChild(s);
-                        }
-                        return outer;
-                    }
-                    // Columns order must match the header exactly:
-                    // [Label] [Ore] [Prezzo] [IVA %] [Totale] [Imponibile] [Imposta] [Totale IVA inclusa]
-                    function row(label, qta, prezzo, iva, totale, imponibile, imposta, totaleIvato) {
-                        var r = document.createElement('div'); r.className = 'row-card';
-                        var name = document.createElement('div'); name.className = 'row-name'; name.textContent = label ?? '';
-                        r.appendChild(name);                                  // label
-                        r.appendChild(pill(h(qta)));                          // Ore (hours) - plain number
-                        r.appendChild(pill(m(prezzo), '€'));                  // Prezzo
-                        r.appendChild(pill(h(iva)));                          // IVA %
-                        r.appendChild(pill(m(totale), '€'));                  // Totale
-                        r.appendChild(pill(m(imponibile), '€'));              // Imponibile
-                        r.appendChild(pill(m(imposta), '€'));                 // Imposta
-                        r.appendChild(pill(m(totaleIvato), '€'));             // Totale IVA inclusa
-                        return r;
-                    }
+                <!-- Row 1: Totale Ricambi -> complementary.partsTotal -->
+                <div class="row-card">
+                    <div class="row-name">Totale Ricambi</div>
 
-                    var raw = document.getElementById('complementary-json')?.textContent || "{}";
-                    var data; try { data = JSON.parse(raw) } catch { data = {} };
+                    <!-- Ore (vuoto) -->
+                    <div class="pill-cell"></div>
 
-                    var out = document.getElementById('work-rows');
+                    <!-- Prezzo (vuoto) -->
+                    <div class="pill-cell"></div>
 
-                    function safe(o) { return o && typeof o === 'object' ? o : null; }
-                    // expected shape: each object has keys:
-                    // quantity (hours), price, vat (percent), total, taxable, tax, totalWithTax
-                    var lines = [
-                        ["Totale Ricambi", safe(data.partsSummary)],
-                        ["Voci complementari", safe(data.parts)],
-                        ["Manodopera Carrozzeria", safe(data.bodywork)],
-                        ["Manodopera Meccanica", safe(data.mechanics)],
-                        ["Materiale di consumo", safe(data.consumables)]
-                    ];
+                    <!-- IVA % -->
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{partsTotal_tax}}</span></span>
+                        </span>
+                    </div>
 
-                    lines.forEach(function ([label, o]) {
-                        if (!o) return;
-                        out.appendChild(row(
-                            label,
-                            o.quantity,    // Ore
-                            o.price,       // Prezzo
-                            o.vat,         // IVA %
-                            o.total,       // Totale
-                            o.taxable,     // Imponibile
-                            o.tax,         // Imposta
-                            o.totalWithTax // Totale IVA inclusa
-                        ));
-                    });
-                }());
-            </script>
+                    <!-- Totale -->
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{partsTotal_total}}</span></span>
+                        </span>
+                    </div>
+
+                    <!-- Imponibile -->
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{partsTotal_taxable}}</span></span>
+                        </span>
+                    </div>
+
+                    <!-- Imposta -->
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{partsTotal_taxAmount}}</span></span>
+                        </span>
+                    </div>
+
+                    <!-- Totale IVA inclusa -->
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{partsTotal_totalWithTax}}</span></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Row 2: Voci complementari -> complementary.parts -->
+                <div class="row-card">
+                    <div class="row-name">Voci complementari</div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{parts_quantity}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{parts_price}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{parts_tax}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{parts_total}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{parts_taxable}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{parts_taxAmount}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{parts_totalWithTax}}</span></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Row 3: Manodopera Carrozzeria -> complementary.bodywork -->
+                <div class="row-card">
+                    <div class="row-name">Manodopera Carrozzeria</div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{bodywork_quantity}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{bodywork_price}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{bodywork_tax}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{bodywork_total}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{bodywork_taxable}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{bodywork_taxAmount}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{bodywork_totalWithTax}}</span></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Row 4: Manodopera Meccanica -> complementary.mechanics -->
+                <div class="row-card">
+                    <div class="row-name">Manodopera Meccanica</div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{mechanics_quantity}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{mechanics_price}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{mechanics_tax}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{mechanics_total}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{mechanics_taxable}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{mechanics_taxAmount}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{mechanics_totalWithTax}}</span></span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Row 5: Materiale di consumo -> complementary.consumables -->
+                <div class="row-card">
+                    <div class="row-name">Materiale di consumo</div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{consumables_quantity}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{consumables_price}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap">
+                            <span class="pill"><span class="ph">{{consumables_tax}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{consumables_total}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{consumables_taxable}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{consumables_taxAmount}}</span></span>
+                        </span>
+                    </div>
+
+                    <div class="pill-cell">
+                        <span class="pill-wrap euro">
+                            <span class="pill"><span class="ph">{{consumables_totalWithTax}}</span></span>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
         </section>
 
 
@@ -187,15 +379,20 @@
         <section class="section totals">
             <div class="row-card totals-row">
                 <div class="row-name">Totale senza IVA</div>
-                <div class="pill-wrap"><span class="pill">{{subtotal}}</span><span class="pill-suffix">€</span></div>
+                <div class="pill-wrap euro">
+                    <span class="pill"><span class="ph">{{subtotal}}</span></span>
+                </div>
             </div>
             <div class="row-card totals-row">
                 <div class="row-name">Totale IVA</div>
-                <div class="pill-wrap"><span class="pill">{{iva}}</span><span class="pill-suffix">€</span></div>
+                <div class="pill-wrap euro">
+                    <span class="pill"><span class="ph">{{iva}}</span></span>
+                </div>
             </div>
             <div class="row-card totals-row highlight">
                 <div class="row-name">Totale IVA inclusa</div>
-                <div class="pill-wrap"><span class="pill">{{totalWithIva}}</span><span class="pill-suffix">€</span>
+                <div class="pill-wrap euro">
+                    <span class="pill"><span class="ph">{{totalWithIva}}</span></span>
                 </div>
             </div>
         </section>
@@ -210,8 +407,8 @@
                 <p>
                     Ai sensi dell'art. 13 del Regolamento europeo 679/2016 desideriamo informarla che i dati da Lei
                     forniti
-                    formeranno oggetto di trattamento unicamente ai fini dello svolgimento del rapporto commerciale tra
-                    noi
+                    formeranno oggetto di trattamento unicamente ai fini dello svolgimento del rapporto commerciale
+                    tra noi
                     intercorrente e/o ai fini dell'adempimento degli obblighi contabili e fiscali, nel pieno rispetto
                     delle norme
                     di cui alla legge indicata, rispettando i principi di liceità e correttezza, garantendole comunque
