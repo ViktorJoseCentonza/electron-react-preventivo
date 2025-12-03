@@ -8,7 +8,7 @@
     color: var(--color-text);
 }
 
-/* Section titles */
+
 .sectionTitle {
     margin: 0 0 0.75rem 0;
     font-size: 1.1rem;
@@ -18,12 +18,12 @@
     word-break: break-word;
 }
 
-/* Utility to make a field span full width in section grids */
+
 .fullRow {
     grid-column: 1 / -1;
 }
 
-/* ==================== GENERAL SECTION ==================== */
+
 .generalSection {
     display: grid;
     grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -39,7 +39,7 @@
     min-width: 0;
 }
 
-/* ==================== ITEMS SECTION ==================== */
+
 .itemsSection {
     display: flex;
     flex-direction: column;
@@ -88,7 +88,7 @@
     background-color: var(--color-header);
 }
 
-/* ==================== COMPLEMENTARY SECTION ==================== */
+
 .complementarySection {
     display: flex;
     flex-direction: column;
@@ -140,7 +140,7 @@
     pointer-events: none;
 }
 
-/* ==================== FINAL TOTALS ==================== */
+
 .finalTotals {
     display: grid;
     grid-template-columns: repeat(3, minmax(180px, 1fr));
@@ -157,7 +157,7 @@
     min-width: 0;
 }
 
-/* ==================== RESPONSIVE ==================== */
+
 @media (max-width: 1100px) {
     .itemRow {
         grid-template-columns:

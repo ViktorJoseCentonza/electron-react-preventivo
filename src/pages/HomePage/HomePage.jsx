@@ -1,4 +1,4 @@
-// HomePage.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -9,12 +9,12 @@ export default function HomePage() {
     const navigate = useNavigate();
     const { labels } = useLanguage();
 
-    // -------------------------------
-    // Utilities
-    // -------------------------------
+
+
+
     const parseIsoFromFilename = (fileName) => {
         if (!fileName || typeof fileName !== "string") return null;
-        // Expected: <name parts>_<YYYY-MM-DD>.json
+
         const base = fileName.replace(/\.json$/i, "");
         const parts = base.split("_");
         const iso = parts[parts.length - 1];
@@ -23,7 +23,7 @@ export default function HomePage() {
 
     const parseDisplayNameFromFilename = (fileName) => {
         if (!fileName || typeof fileName !== "string") return null;
-        // Expected example: AR738ar_Fiat 141 panda_2025-11-11.json
+
         const base = fileName.replace(/\.json$/i, "");
         const parts = base.split("_");
         if (parts.length >= 3) {
@@ -33,7 +33,7 @@ export default function HomePage() {
             if (license) return license;
             if (model) return model;
         }
-        // Fallback to first token if structure differs
+
         return parts[0] || null;
     };
 
@@ -50,9 +50,9 @@ export default function HomePage() {
         return Number.isNaN(dt.getTime()) ? null : dt;
     };
 
-    // Build a display label using priority:
-    // Targa (licensePlate), Modello (model), Cliente (client), Telaio (chassis), Anno (year), Assicurazione (insurance)
-    // Always use up to two of these, in that order.
+
+
+
     const buildPriorityName = (preview) => {
         if (!preview) return null;
         const ordered = [
@@ -68,9 +68,9 @@ export default function HomePage() {
         return `${ordered[0]} - ${ordered[1]}`;
     };
 
-    // -------------------------------
-    // Fetch quotes from backend (normalized API only)
-    // -------------------------------
+
+
+
     useEffect(() => {
         let mounted = true;
 
@@ -95,22 +95,22 @@ export default function HomePage() {
         };
     }, []);
 
-    // -------------------------------
-    // Display-friendly name
-    // -------------------------------
+
+
+
     const getDisplayName = (q) => {
         const fromPreview = buildPriorityName(q?.preview);
         if (fromPreview) return fromPreview;
 
-        // Derive from file name if preview lacks data
+
         const fromFile = parseDisplayNameFromFilename(q?._fileName || q?.file);
         return fromFile || labels.unnamedQuote;
     };
 
-    // -------------------------------
-    // Effective ISO date (YYYY-MM-DD)
-    // Prefer preview.quoteDate if present/valid, else derive from filename
-    // -------------------------------
+
+
+
+
     const getIsoDate = (q) => {
         const previewDate = q?.preview?.quoteDate;
         if (previewDate && /^\d{4}-\d{2}-\d{2}$/.test(previewDate)) {
@@ -119,11 +119,11 @@ export default function HomePage() {
         return parseIsoFromFilename(q?._fileName || q?.file);
     };
 
-    // -------------------------------
-    // Group and sort by date (newest first)
-    // -------------------------------
+
+
+
     const groupedByDate = useMemo(() => {
-        const buckets = new Map(); // key: ISO date or "noDate", value: array
+        const buckets = new Map();
 
         for (const q of quotes) {
             const iso = getIsoDate(q) || "noDate";
@@ -134,11 +134,11 @@ export default function HomePage() {
         const entries = Array.from(buckets.entries());
         entries.sort(([isoA], [isoB]) => {
             if (isoA === "noDate" && isoB === "noDate") return 0;
-            if (isoA === "noDate") return 1; // push "noDate" at bottom
+            if (isoA === "noDate") return 1;
             if (isoB === "noDate") return -1;
             const dA = toDateObjFromIso(isoA)?.getTime() ?? 0;
             const dB = toDateObjFromIso(isoB)?.getTime() ?? 0;
-            return dB - dA; // newest first
+            return dB - dA;
         });
 
         return entries;

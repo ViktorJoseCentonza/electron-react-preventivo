@@ -5,7 +5,7 @@ import it from "../lang/it";
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-    const [lang, setLang] = useState("it"); // default Italian
+    const [lang, setLang] = useState("it");
 
     const labels = lang === "it" ? it : en;
 

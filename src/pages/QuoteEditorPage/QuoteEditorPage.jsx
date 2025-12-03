@@ -5,19 +5,20 @@ import QuoteEditor from "../../components/QuoteEditor/QuoteEditor";
 import QuoteSave from "../../components/QuoteSave/QuoteSave";
 import { defaultQuote, useQuoteData } from "../../contexts/QuoteDataContext";
 import { useQuoteState } from "../../contexts/QuoteStateContext";
+import styles from "./QuoteEditorPage.module.css";
 
 export default function QuoteEditorPage() {
-    const { fileName } = useParams();  // Get fileName from the URL parameters
+    const { fileName } = useParams();
     const { quote, update, resetQuote, setQuoteDirect } = useQuoteData();
     const { markDirty, markSaved } = useQuoteState();
 
-    const [loading, setLoading] = useState(true);  // Initially set to loading state
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Fetch quote data or reset to a new quote based on the fileName
+
     useEffect(() => {
         if (fileName) {
-            // Fetch the existing quote if a fileName is provided (edit mode)
+
             async function fetchQuote() {
                 if (!window.api?.readQuote) {
                     setError("IPC not available");
@@ -34,7 +35,7 @@ export default function QuoteEditorPage() {
                     }
 
                     const data = result.data || {};
-                    // Normalize and merge data with defaults
+
                     const next = {
                         ...defaultQuote,
                         general: { ...defaultQuote.general, ...(data.quote || {}) },
@@ -42,16 +43,31 @@ export default function QuoteEditorPage() {
                         complementary: {
                             ...defaultQuote.complementary,
                             ...(data.complementary || {}),
-                            parts: { ...defaultQuote.complementary.parts, ...(data.complementary?.parts || {}) },
-                            bodywork: { ...defaultQuote.complementary.bodywork, ...(data.complementary?.bodywork || {}) },
-                            mechanics: { ...defaultQuote.complementary.mechanics, ...(data.complementary?.mechanics || {}) },
-                            consumables: { ...defaultQuote.complementary.consumables, ...(data.complementary?.consumables || {}) },
-                            partsTotal: { ...defaultQuote.complementary.partsTotal, ...(data.complementary?.partsTotal || {}) },
+                            parts: {
+                                ...defaultQuote.complementary.parts,
+                                ...(data.complementary?.parts || {})
+                            },
+                            bodywork: {
+                                ...defaultQuote.complementary.bodywork,
+                                ...(data.complementary?.bodywork || {})
+                            },
+                            mechanics: {
+                                ...defaultQuote.complementary.mechanics,
+                                ...(data.complementary?.mechanics || {})
+                            },
+                            consumables: {
+                                ...defaultQuote.complementary.consumables,
+                                ...(data.complementary?.consumables || {})
+                            },
+                            partsTotal: {
+                                ...defaultQuote.complementary.partsTotal,
+                                ...(data.complementary?.partsTotal || {})
+                            },
                         },
-                        totals: { ...defaultQuote.totals }, // Totals will be recomputed
+                        totals: { ...defaultQuote.totals },
                     };
 
-                    // Set the fetched data to the quote context
+
                     setQuoteDirect(next);
                     markSaved(fileName);
                     setLoading(false);
@@ -63,23 +79,23 @@ export default function QuoteEditorPage() {
 
             fetchQuote();
         } else {
-            // Reset quote to default values if no fileName (create mode)
+
             resetQuote();
             markDirty(false);
             setLoading(false);
         }
     }, [fileName, resetQuote, setQuoteDirect, markSaved, markDirty]);
 
-    // Show loading or error states
-    if (loading) return <p className="p-4">Loading quote...</p>;
-    if (error) return <p className="p-4 text-red-600">Error: {error}</p>;
+
+    if (loading) return <p className={styles.loading}>Loading quote...</p>;
+    if (error) return <p className={styles.error}>Error: {error}</p>;
 
     return (
-        <div className="p-4 flex flex-col gap-4">
-            <QuoteEditor /> {/* The QuoteEditor component for editing the quote */}
+        <div className={styles.container}>
+            <QuoteEditor /> { }
 
-            <div className="mt-4 flex gap-2">
-                <QuoteSave fileName={fileName} mode={fileName ? "edit" : "create"} /> {/* Save or Save As */}
+            <div className={styles.actionsRow}>
+                <QuoteSave fileName={fileName} mode={fileName ? "edit" : "create"} /> { }
                 <ExportPdfButton />
             </div>
         </div>

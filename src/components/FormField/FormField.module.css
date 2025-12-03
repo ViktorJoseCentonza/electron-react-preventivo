@@ -40,7 +40,7 @@
     box-shadow: var(--shadow-focus);
 }
 
-/* Symbol wrapper */
+
 .symbolWrapper {
     position: relative;
     display: flex;
@@ -63,7 +63,7 @@
     color: var(--color-text);
 }
 
-/* Responsive tweaks */
+
 @media (max-width: 768px) {
     .input {
         font-size: 0.95rem;

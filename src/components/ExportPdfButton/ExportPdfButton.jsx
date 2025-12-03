@@ -1,9 +1,15 @@
 import { useState } from "react";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { useQuoteData } from "../../contexts/QuoteDataContext";
+import styles from "./ExportPdfButton.module.css";
 
 const ExportPdfButton = () => {
+    const { labels } = useLanguage();
     const { quote } = useQuoteData();
     const [status, setStatus] = useState("");
+    const [statusKind, setStatusKind] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [anonymize, setAnonymize] = useState(false);
 
     const withTimeout = (promise, ms, onTimeout) =>
         new Promise((resolve) => {
@@ -27,10 +33,8 @@ const ExportPdfButton = () => {
                 });
         });
 
-    // Prova a recuperare il path originale del JSON, se lo tieni nel quote
     const getSourceJsonPath = (quote) => {
         if (!quote || typeof quote !== "object") return "";
-        // adatta questi campi ai tuoi dati reali se usi nomi diversi
         return (
             quote.meta?.filePath ||
             quote.meta?.path ||
@@ -40,7 +44,6 @@ const ExportPdfButton = () => {
         );
     };
 
-    // Se non abbiamo un path, costruiamo un nome file decente dal contenuto
     const buildFallbackPdfName = (quote) => {
         const g = (quote && (quote.general || quote.quote)) || {};
 
@@ -51,7 +54,7 @@ const ExportPdfButton = () => {
 
         let base = parts.join(" - ").trim() || "quote";
 
-        // pulizia per nome file (no caratteri illegali)
+
         base = base.replace(/[<>:"/\\|?*]+/g, "_");
 
         return `${base}.pdf`;
@@ -60,21 +63,21 @@ const ExportPdfButton = () => {
     const getDefaultSaveInput = (quote) => {
         const sourcePath = getSourceJsonPath(quote);
         if (sourcePath) {
-            // Il main prenderà questo path, userà la stessa dir
-            // e cambierà l'estensione in .pdf
             return sourcePath;
         }
-        // Altrimenti passiamo solo un nome file suggerito
         return buildFallbackPdfName(quote);
     };
 
     const handleExportPdf = async () => {
         if (!quote) {
-            setStatus("No quote data available.");
+            setStatus(labels.pdf_no_quote_data);
+            setStatusKind("error");
             return;
         }
 
-        setStatus("Preparing PDF…");
+        setIsLoading(true);
+        setStatus(labels.exporting);
+        setStatusKind("info");
 
         try {
             const defaultSaveInput = getDefaultSaveInput(quote);
@@ -82,45 +85,104 @@ const ExportPdfButton = () => {
             const { ok, path, canceled, error } = await withTimeout(
                 window.api?.quotes?.choosePdfSavePath?.(defaultSaveInput),
                 15000,
-                () => setStatus("Save dialog taking too long…")
+                () => {
+                    setStatus(labels.pdf_save_dialog_slow);
+                    setStatusKind("info");
+                }
             );
 
             if (!ok) {
                 if (canceled) {
-                    setStatus("Export canceled.");
+                    setStatus(labels.pdf_export_canceled);
+                    setStatusKind("info");
                     return;
                 }
-                setStatus(`Failed to choose save path: ${error || "unknown error"}`);
+                setStatus(
+                    `${labels.pdf_export_error} ${error || ""}`.trim()
+                );
+                setStatusKind("error");
                 return;
             }
 
             if (!path) {
-                setStatus("No path selected.");
+                setStatus(labels.pdf_no_path_selected);
+                setStatusKind("error");
                 return;
             }
 
-            setStatus("Generating PDF…");
+            setStatus(labels.exporting);
+            setStatusKind("info");
 
             const { ok: exportOk, error: exportErr } = await withTimeout(
-                window.api?.quotes?.exportToPdf?.({ targetPath: path, data: quote }),
+                window.api?.quotes?.exportToPdf?.({
+                    targetPath: path,
+                    data: quote,
+                    anonymize,
+                }),
                 30000,
-                () => setStatus("PDF generation taking longer than expected…")
+                () => {
+                    setStatus(labels.pdf_generation_slow);
+                    setStatusKind("info");
+                }
             );
 
             if (exportOk) {
-                setStatus(`PDF successfully saved at: ${path}`);
+                setStatus(labels.pdf_exported);
+                setStatusKind("success");
             } else {
-                setStatus(`Failed to export PDF: ${exportErr || "unknown error"}`);
+                setStatus(
+                    `${labels.pdf_export_error} ${exportErr || ""}`.trim()
+                );
+                setStatusKind("error");
             }
         } catch (error) {
-            setStatus(`Error: ${error.message}`);
+            setStatus(
+                `${labels.pdf_export_error} ${error?.message || ""}`.trim()
+            );
+            setStatusKind("error");
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    let statusClassName = styles.statusMessage;
+    if (statusKind === "success") {
+        statusClassName += ` ${styles.statusSuccess}`;
+    } else if (statusKind === "error") {
+        statusClassName += ` ${styles.statusError}`;
+    }
+
     return (
-        <div>
-            <button onClick={handleExportPdf}>Export as PDF</button>
-            <p>{status}</p>
+        <div className={styles.container}>
+            <div className={styles.buttonRow}>
+                <button
+                    type="button"
+                    onClick={handleExportPdf}
+                    className={styles.exportButton}
+                    disabled={isLoading || !quote}
+                    aria-busy={isLoading}
+                >
+                    {isLoading && (
+                        <span className={styles.spinner} aria-hidden="true" />
+                    )}
+                    <span>{isLoading ? labels.exporting : labels.export_pdf}</span>
+                </button>
+            </div>
+
+            <div className={styles.optionsRow}>
+                <label className={styles.checkboxLabel}>
+                    <input
+                        type="checkbox"
+                        checked={anonymize}
+                        onChange={(e) => setAnonymize(e.target.checked)}
+                    />
+                    <span>{labels.pdf_anonymous_label}</span>
+                </label>
+            </div>
+
+            <p className={statusClassName} aria-live="polite">
+                {status || "\u00A0"}
+            </p>
         </div>
     );
 };

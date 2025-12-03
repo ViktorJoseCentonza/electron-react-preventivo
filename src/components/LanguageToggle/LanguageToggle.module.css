@@ -1,9 +1,9 @@
 .toggleWrapper {
     position: relative;
     width: 5rem;
-    /* base width */
+
     height: 2rem;
-    /* base height */
+
     background-color: var(--color-toggle-bg, #4b5563);
     border-radius: 9999px;
     padding: 0.1rem;
@@ -11,7 +11,7 @@
     display: flex;
     align-items: center;
 
-    /* make it responsive without shrinking layout */
+
     max-width: 100%;
     transform-origin: left center;
     transition: transform 0.2s ease-in-out;
@@ -44,17 +44,17 @@
     background-image: url(../../assets/Flag_of_the_United_Kingdom.svg);
 }
 
-/* Responsive scaling for smaller screens */
+
 @media (max-width: 768px) {
     .toggleWrapper {
         transform: scale(0.9);
-        /* 90% of original size */
+
     }
 }
 
 @media (max-width: 480px) {
     .toggleWrapper {
         transform: scale(0.8);
-        /* 80% of original size */
+
     }
 }

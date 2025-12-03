@@ -3,7 +3,7 @@ import { recalculateQuote } from "./quoteUtils";
 
 const QuoteDataContext = createContext(null);
 
-// expose defaults so pages can build fresh state correctly
+
 export const defaultQuote = {
     general: {
         client: "",
@@ -14,7 +14,7 @@ export const defaultQuote = {
         insurance: "",
         quoteDate: new Date().toISOString().split("T")[0],
     },
-    items: [], // ghost row is UI-only
+    items: [],
     complementary: {
         parts: { quantity: 0, price: 0, tax: 22, total: 0, taxable: 0, taxAmount: 0, totalWithTax: 0 },
         bodywork: { quantity: 0, price: 40, tax: 22, total: 0, taxable: 0, taxAmount: 0, totalWithTax: 0 },

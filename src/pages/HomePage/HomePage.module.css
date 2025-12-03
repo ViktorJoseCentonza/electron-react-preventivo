@@ -11,19 +11,19 @@
     color: var(--color-text);
 }
 
-/* Grid layout for date cards - fully fluid */
+
 .cardsWrapper {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
 }
 
-/* Single date card */
+
 .dateCard {
     background-color: var(--color-header);
     border-radius: 0.75rem;
     height: 30vh;
-    /* fixed height, content scrolls inside */
+
     box-shadow: var(--shadow-default);
     color: var(--color-text);
     display: flex;
@@ -31,7 +31,7 @@
     overflow: hidden;
 }
 
-/* Header showing date */
+
 .dateHeader {
     font-size: 1rem;
     font-weight: 600;
@@ -43,11 +43,11 @@
     flex-shrink: 0;
 }
 
-/* Scrollable container for quotes inside the card */
+
 .cardsContainer {
     flex: 1;
     min-height: 0;
-    /* critical for flex scroll */
+
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -58,7 +58,7 @@
     overflow-y: auto;
 }
 
-/* Individual quote card */
+
 .card {
     flex-shrink: 0;
     background-color: var(--color-bg);
@@ -82,7 +82,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-/* Fully fluid responsive adjustments */
+
 @media (max-width: 1024px) {
     .cardsWrapper {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -106,7 +106,7 @@
 @media (max-width: 480px) {
     .cardsWrapper {
         grid-template-columns: 1fr;
-        /* single column on mobile */
+
     }
 
     .dateCard {

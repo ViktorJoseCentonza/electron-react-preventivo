@@ -25,19 +25,19 @@ const EMPTY_ITEM = {
     total: 0,
 };
 
-// Utility function to replace commas with dots, and return 0 for invalid numbers
+
 const normalizeCommaToDot = (value) => {
     if (typeof value === "string") {
         const normalizedValue = value.replace(",", ".");
         const parsedValue = parseFloat(normalizedValue);
 
-        // Check if the parsed value is a valid number (not NaN)
+
         if (isNaN(parsedValue)) {
-            return 0; // Return 0 for invalid numbers
+            return 0;
         }
-        return normalizedValue; // Return the normalized value
+        return normalizedValue;
     }
-    return value; // If it's not a string, return the original value
+    return value;
 };
 
 const isItemEmpty = (row) => {
@@ -63,10 +63,10 @@ export default function QuoteEditor() {
     };
 
     const handleItemChange = (idx, key, value) => {
-        // Only normalize for numeric fields
+
         const normalizedValue = ["SR", "LA", "VE", "ME", "quantity", "price"].includes(key)
             ? normalizeCommaToDot(value)
-            : value; // Apply normalization only to numeric fields
+            : value;
         update(`items[${idx}].${key}`, normalizedValue);
     };
 
@@ -81,10 +81,10 @@ export default function QuoteEditor() {
     };
 
     const handleGhostChange = (key, value) => {
-        // Only normalize for numeric fields
+
         const normalizedValue = ["SR", "LA", "VE", "ME", "quantity", "price"].includes(key)
             ? normalizeCommaToDot(value)
-            : value; // Apply normalization only to numeric fields
+            : value;
         const newItem = { ...EMPTY_ITEM, [key]: normalizedValue };
         const nextItems = [...(quote.items ?? []), newItem];
         update("items", nextItems);
@@ -95,7 +95,7 @@ export default function QuoteEditor() {
 
     return (
         <div className={styles.container}>
-            {/* General Section */}
+            { }
             <div className={styles.generalSection}>
                 {generalFields.map(({ key, type, maxLength, style }) => (
                     <FormField
@@ -109,7 +109,7 @@ export default function QuoteEditor() {
                     />
                 ))}
 
-                {/* Date: full row */}
+                { }
                 <FormField
                     key="quoteDate"
                     wrapperClassName={styles.fullRow}
@@ -120,7 +120,7 @@ export default function QuoteEditor() {
                 />
             </div>
 
-            {/* Items Section */}
+            { }
             <div className={styles.itemsSection}>
                 <h2 className={styles.sectionTitle}>{labels.section_items}</h2>
 
@@ -200,14 +200,14 @@ export default function QuoteEditor() {
                                 symbol="€"
                                 inputProps={!isGhost ? { onBlur: () => handleRowBlur(idx) } : undefined}
                             />
-                            {/* Computed total: read-only + skipped in tab order */}
+                            { }
                             <FormField label={null} readOnly value={totalValue} symbol="€" skipTab />
                         </div>
                     );
                 })}
             </div>
 
-            {/* Complementary Section */}
+            { }
             <div className={styles.complementarySection}>
                 <h2 className={styles.sectionTitle}>{labels.section_complementary}</h2>
 
@@ -222,12 +222,12 @@ export default function QuoteEditor() {
                     <div className={styles.headerCell}>{labels.total_with_iva}</div>
                 </div>
 
-                {/* Totale ricambi */}
+                { }
                 <div className={styles.compRow}>
                     <div className={styles.compTitleCell}><h3>{labels.parts_total}</h3></div>
                     <div className={styles.placeholder} aria-hidden="true"></div>
                     <div className={styles.placeholder} aria-hidden="true"></div>
-                    {/* IVA editable but skipped while tabbing */}
+                    { }
                     <FormField
                         label={null}
                         type="number"
@@ -235,14 +235,14 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.partsTotal.tax", v)}
                         skipTab
                     />
-                    {/* Computed fields: read-only + skip tab */}
+                    { }
                     <FormField label={null} readOnly value={(quote.complementary.partsTotal.total || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.partsTotal.taxable || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.partsTotal.taxAmount || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.partsTotal.totalWithTax || 0).toFixed(2)} symbol="€" skipTab />
                 </div>
 
-                {/* Voci complementari */}
+                { }
                 <div className={styles.compRow}>
                     <div className={styles.compTitleCell}><h3>{labels.comp_voci}</h3></div>
                     <FormField
@@ -258,7 +258,7 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.parts.price", v)}
                         symbol="€"
                     />
-                    {/* IVA editable but skipped while tabbing */}
+                    { }
                     <FormField
                         label={null}
                         type="number"
@@ -266,14 +266,14 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.parts.tax", v)}
                         skipTab
                     />
-                    {/* Computed: skip tab */}
+                    { }
                     <FormField label={null} readOnly value={(quote.complementary.parts.total || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.parts.taxable || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.parts.taxAmount || 0).toFixed(2)} symbol="€" skipTab />
                     <FormField label={null} readOnly value={(quote.complementary.parts.totalWithTax || 0).toFixed(2)} symbol="€" skipTab />
                 </div>
 
-                {/* Manodopera Carrozzeria */}
+                { }
                 <div className={styles.compRow}>
                     <div className={styles.compTitleCell}><h3>{labels.comp_carrozzeria}</h3></div>
                     <FormField label={null} type="number" value={quote.complementary.bodywork.quantity ?? 0} readOnly skipTab />
@@ -284,7 +284,7 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.bodywork.price", v)}
                         symbol="€"
                     />
-                    {/* IVA editable but skipped while tabbing */}
+                    { }
                     <FormField
                         label={null}
                         type="number"
@@ -298,7 +298,7 @@ export default function QuoteEditor() {
                     <FormField label={null} readOnly value={(quote.complementary.bodywork.totalWithTax || 0).toFixed(2)} symbol="€" skipTab />
                 </div>
 
-                {/* Manodopera Meccanica */}
+                { }
                 <div className={styles.compRow}>
                     <div className={styles.compTitleCell}><h3>{labels.comp_meccanica}</h3></div>
                     <FormField label={null} type="number" value={quote.complementary.mechanics.quantity ?? 0} readOnly skipTab />
@@ -309,7 +309,7 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.mechanics.price", v)}
                         symbol="€"
                     />
-                    {/* IVA editable but skipped while tabbing */}
+                    { }
                     <FormField
                         label={null}
                         type="number"
@@ -323,7 +323,7 @@ export default function QuoteEditor() {
                     <FormField label={null} readOnly value={(quote.complementary.mechanics.totalWithTax || 0).toFixed(2)} symbol="€" skipTab />
                 </div>
 
-                {/* Materiale di consumo */}
+                { }
                 <div className={styles.compRow}>
                     <div className={styles.compTitleCell}><h3>{labels.comp_consumo}</h3></div>
                     <FormField label={null} type="number" value={quote.complementary.consumables.quantity ?? 0} readOnly skipTab />
@@ -334,7 +334,7 @@ export default function QuoteEditor() {
                         onChange={(v) => update("complementary.consumables.price", v)}
                         symbol="€"
                     />
-                    {/* IVA editable but skipped while tabbing */}
+                    { }
                     <FormField
                         label={null}
                         type="number"
@@ -349,7 +349,7 @@ export default function QuoteEditor() {
                 </div>
             </div>
 
-            {/* Final Totals */}
+            { }
             <div className={styles.finalTotals}>
                 <FormField label={labels.total_no_vat} readOnly value={(quote.totals.subtotal || 0).toFixed(2)} symbol="€" skipTab />
                 <FormField label={labels.total_vat_amount} readOnly value={(quote.totals.iva || 0).toFixed(2)} symbol="€" skipTab />

@@ -1,8 +1,8 @@
-// main.cjs
+
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-// Import IPC handlers modularly
+
 require('./ipc/ipcJson.cjs');
 require('./ipc/ipcPdf.cjs');
 

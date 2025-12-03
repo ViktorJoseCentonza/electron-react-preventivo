@@ -1,4 +1,3 @@
-/* === Print setup =========================================================== */
 @page {
     margin: 4mm 8mm;
 }
@@ -24,7 +23,7 @@ body {
     margin: 0;
 }
 
-/* Palette - white theme */
+
 :root {
     --bg: #ffffff;
     --ink: #1b2333;
@@ -41,12 +40,12 @@ body {
     display: flex;
 }
 
-/* Prevent placeholder tokens from being split */
+
 .ph {
     white-space: nowrap;
 }
 
-/* Page */
+
 .page {
     background: var(--bg);
     border: 1px solid var(--line);
@@ -57,7 +56,7 @@ body {
     overflow-x: hidden;
 }
 
-/* Header */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -101,7 +100,7 @@ body {
     letter-spacing: .6px;
 }
 
-/* Panel / sections */
+
 .panel,
 .section {
     display: flex;
@@ -111,7 +110,7 @@ body {
     width: 100%;
 }
 
-/* Card container: used for veicolo/cliente and for totals rows */
+
 .card {
     border: 1px solid var(--line-strong);
     border-radius: 12px;
@@ -134,7 +133,7 @@ body {
     flex: 0 0 100%;
 }
 
-/* Info grid (veicolo + cliente) */
+
 .kv-grid {
     display: flex;
     flex-direction: column;
@@ -165,7 +164,7 @@ body {
     min-width: 160px;
 }
 
-/* Pill primitives (used everywhere) */
+
 .pill-wrap {
     display: inline-flex;
     align-items: center;
@@ -189,20 +188,20 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    /* testing */
+
     display: flex;
     justify-content: center;
     width: 100%;
 }
 
-/* Euro suffix */
+
 .pill-wrap.euro .pill::after {
     content: " €";
     font-weight: 700;
     margin-left: 4px;
 }
 
-/* Table card (contenitore della tabella articoli) */
+
 .table-card {
     border: 1px solid var(--line-strong);
     border-radius: 12px;
@@ -212,14 +211,14 @@ body {
     overflow: hidden;
 }
 
-/* Items table */
+
 table.items {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
 }
 
-/* Header row della tabella */
+
 table.items thead th {
     padding: 10px 12px;
     font-weight: 800;
@@ -229,7 +228,7 @@ table.items thead th {
     background: #fff;
 }
 
-/* Allineamenti header */
+
 table.items thead th:nth-child(3),
 table.items thead th:nth-child(4),
 table.items thead th:nth-child(5),
@@ -243,7 +242,7 @@ table.items thead th:nth-child(9) {
     text-align: right;
 }
 
-/* Body righe */
+
 table.items tbody {
     background: #fff;
 }
@@ -264,7 +263,7 @@ table.items tbody tr:last-child td {
     border-bottom: none;
 }
 
-/* Column widths */
+
 .col-fonte {
     width: 12%;
 }
@@ -291,21 +290,21 @@ table.items tbody tr:last-child td {
     width: 12%;
 }
 
-/* Numeri a destra nelle ultime colonne del body */
+
 table.items tbody td:nth-child(7),
 table.items tbody td:nth-child(8),
 table.items tbody td:nth-child(9) {
     text-align: right;
 }
 
-/* Pills nelle celle numeriche allineate a destra */
+
 table.items tbody td:nth-child(7) .pill-wrap,
 table.items tbody td:nth-child(8) .pill-wrap,
 table.items tbody td:nth-child(9) .pill-wrap {
     margin-left: auto;
 }
 
-/* Section grid header (Riepilogo lavorazioni) */
+
 .grid-head {
     display: flex;
     flex-wrap: wrap;
@@ -321,20 +320,20 @@ table.items tbody td:nth-child(9) .pill-wrap {
     color: #1b2b44;
 }
 
-/* Prima colonna nell'header (vuota ma allineata al titolo delle righe) */
+
 .grid-head .row-name {
     width: 130px;
     flex-shrink: 0;
 }
 
-/* Colonne di testo dell'header sul lato destro */
+
 .grid-head .gh {
     flex: 1 1 0;
     text-align: center;
     min-width: 0;
 }
 
-/* Row cards container (Riepilogo lavorazioni) */
+
 .row-list {
     margin-top: 10px;
     display: flex;
@@ -342,7 +341,7 @@ table.items tbody td:nth-child(9) .pill-wrap {
     gap: 10px;
 }
 
-/* Each row in the summary */
+
 .row-card {
     display: flex;
     flex-wrap: wrap;
@@ -354,7 +353,7 @@ table.items tbody td:nth-child(9) .pill-wrap {
     background: #fff;
 }
 
-/* Fixed-width column for the row title */
+
 .row-name {
     width: 130px;
     flex-shrink: 0;
@@ -362,7 +361,7 @@ table.items tbody td:nth-child(9) .pill-wrap {
     color: #1b2333;
 }
 
-/* Celle dati nel riepilogo lavorazioni */
+
 .pill-cell {
     flex: 1 1 0;
     min-width: 0;
@@ -370,12 +369,12 @@ table.items tbody td:nth-child(9) .pill-wrap {
     justify-content: center;
 }
 
-/* Pills inside cells align nicely */
+
 .row-card .pill-wrap {
     margin: 0 auto;
 }
 
-/* Totals */
+
 .totals {
     flex-wrap: wrap;
     gap: 12px;
@@ -405,7 +404,7 @@ table.items tbody td:nth-child(9) .pill-wrap {
     background: linear-gradient(180deg, #f7fbff, #fff 70%);
 }
 
-/* Footer */
+
 .footer {
     margin-top: 18px;
     font-size: 10px;

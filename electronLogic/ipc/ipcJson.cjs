@@ -1,20 +1,20 @@
-// ipc/ipcjson.cjs
+
 const { ipcMain, dialog, app } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
-// ----------------------------
-// CONSTANTS & DIRECTORIES
-// ----------------------------
+
+
+
 const APP_DIR_NAME = "preventivi-officina";
 const jsonDir = path.join(app.getPath("documents"), APP_DIR_NAME);
 
-// Ensure base dir exists
+
 ensureDir(jsonDir);
 
-// ----------------------------
-// UTILITIES
-// ----------------------------
+
+
+
 function ensureDir(dirPath) {
     try {
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
@@ -26,12 +26,12 @@ function ensureDir(dirPath) {
 
 function sanitizeFilename(name) {
     if (!name || typeof name !== "string") return "";
-    // Keep letters, numbers, spaces, dashes, underscores, dots (for .json)
+
     const cleaned = name
         .trim()
         .replace(/[<>:"/\\|?*\x00-\x1F]/g, " ")
         .replace(/\s+/g, " ")
-        .replace(/^\.+$/, "") // avoid "." or ".."
+        .replace(/^\.+$/, "")
         .slice(0, 200);
     return cleaned || "preventivo";
 }
@@ -40,7 +40,7 @@ function withJsonExtension(filename) {
     return filename && filename.toLowerCase().endsWith(".json") ? filename : `${filename}.json`;
 }
 
-/** Atomic write: write to temp file then rename */
+
 function writeJSONAtomic(filePath, dataObj) {
     if (!filePath) throw new Error("filePath required");
     const dir = path.dirname(filePath);
@@ -50,7 +50,7 @@ function writeJSONAtomic(filePath, dataObj) {
     const payload = JSON.stringify(dataObj, null, 2);
 
     fs.writeFileSync(tmpPath, payload, { encoding: "utf8" });
-    // fsync via rename boundary for most platforms
+
     fs.renameSync(tmpPath, filePath);
 }
 
@@ -59,7 +59,7 @@ function readJSONSafe(filePath) {
     return JSON.parse(text);
 }
 
-/** Return array of ".json" files in jsonDir */
+
 function listJsonFiles() {
     if (!fs.existsSync(jsonDir)) return [];
     return fs
@@ -68,14 +68,14 @@ function listJsonFiles() {
         .map((d) => d.name);
 }
 
-/** Safe getter for nested fields with legacy/modern shapes */
+
 function getContainer(raw) {
-    // If file structure is { quote: {...}, items, complementary, totals }
-    // use raw.quote as the container for the general fields.
+
+
     if (raw && typeof raw === "object" && raw.quote && typeof raw.quote === "object") {
         return raw.quote;
     }
-    // Otherwise, assume raw itself might contain general fields
+
     return raw || {};
 }
 
@@ -88,9 +88,9 @@ function normalizeQuoteForSearch(raw) {
         return { general: {}, items: [], complementary: {}, totals: {} };
     }
 
-    const container = getContainer(raw); // where general fields likely live
+    const container = getContainer(raw);
 
-    // GENERAL (prefer container.general, else fields on container)
+
     const general =
         (container.general && typeof container.general === "object" ? container.general : null) || {
             client: container.client,
@@ -102,13 +102,13 @@ function normalizeQuoteForSearch(raw) {
             quoteDate: container.quoteDate,
         };
 
-    // ITEMS can be top-level raw.items OR inside container.items
+
     const items =
         (Array.isArray(raw.items) && raw.items) ||
         (Array.isArray(container.items) && container.items) ||
         [];
 
-    // COMPLEMENTARY may live at top-level or inside container
+
     const complementary =
         (raw.complementary && typeof raw.complementary === "object" && raw.complementary) ||
         (container.complementary && typeof container.complementary === "object" && container.complementary) ||
@@ -120,7 +120,7 @@ function normalizeQuoteForSearch(raw) {
             partsTotal: container.partsTotal || raw.partsTotal,
         };
 
-    // TOTALS may live at top-level or inside container
+
     const totals =
         (raw.totals && typeof raw.totals === "object" && raw.totals) ||
         (container.totals && typeof container.totals === "object" && container.totals) ||
@@ -136,7 +136,7 @@ function normalizeQuoteForSearch(raw) {
     };
 }
 
-/** YYYY-MM-DD for today */
+
 function todayISO() {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -186,11 +186,11 @@ function nullable(v) {
     return v == null ? null : v;
 }
 
-// ----------------------------
-// IPC HANDLERS
-// ----------------------------
 
-/** Return base directory used for storing quotes */
+
+
+
+
 ipcMain.handle("quotes:base-dir", async () => {
     try {
         ensureDir(jsonDir);
@@ -200,7 +200,7 @@ ipcMain.handle("quotes:base-dir", async () => {
     }
 });
 
-/** List all quotes. Returns lightweight preview data and filenames. */
+
 ipcMain.handle("quotes:list", async () => {
     try {
         ensureDir(jsonDir);
@@ -217,12 +217,12 @@ ipcMain.handle("quotes:list", async () => {
                         licensePlate: nullable(general.licensePlate),
                         model: nullable(general.model),
                         year: nullable(general.year),
-                        chassis: nullable(general.chassis),       // ADDED to preview
-                        insurance: nullable(general.insurance),   // already present earlier, keep it
+                        chassis: nullable(general.chassis),
+                        insurance: nullable(general.insurance),
                         quoteDate: nullable(general.quoteDate),
                         totalWithIva: totals?.totalWithIva ?? null,
                     },
-                    _fileName: file, // keep existing field as you had
+                    _fileName: file,
                 };
             } catch (err) {
                 console.warn("[ipcJson] Failed to parse file during list:", file, err);
@@ -236,7 +236,7 @@ ipcMain.handle("quotes:list", async () => {
     }
 });
 
-/** Read a single quote file by name (must exist in jsonDir) */
+
 ipcMain.handle("quotes:read", async (_event, fileName) => {
     try {
         if (!fileName) throw new Error("fileName is required");
@@ -244,25 +244,25 @@ ipcMain.handle("quotes:read", async (_event, fileName) => {
         const filePath = path.join(jsonDir, safe);
         if (!fs.existsSync(filePath)) return { ok: false, error: "File not found" };
         const data = readJSONSafe(filePath);
-        return { ok: true, data, _fileName: safe }; // Include the filename alongside data
+        return { ok: true, data, _fileName: safe };
     } catch (err) {
         return { ok: false, error: `Failed to read quote: ${err.message}` };
     }
 });
 
-/** Write/Save quote into jsonDir with given filename */
+
 ipcMain.handle("quotes:write", async (_event, { filename, data }) => {
     try {
         if (typeof data !== "object" || data == null) throw new Error("data must be an object");
 
-        // If filename missing or trivial, derive based on your priority
+
         let desired = filename && String(filename).trim();
         if (!desired || desired.toLowerCase() === "preventivo" || desired === ".json") {
             desired = suggestFileNameFromData(data);
         }
         const safe = withJsonExtension(sanitizeFilename(desired));
 
-        // also keep _fileName in the saved payload (your existing behavior)
+
         data._fileName = safe;
 
         const filePath = path.join(jsonDir, safe);
@@ -273,7 +273,7 @@ ipcMain.handle("quotes:write", async (_event, { filename, data }) => {
     }
 });
 
-/** Autosave helper (same as WRITE, separate channel for clarity/telemetry) */
+
 ipcMain.handle("quotes:auto-save", async (_event, { filename, data }) => {
     try {
         if (typeof data !== "object" || data == null) throw new Error("data must be an object");
@@ -293,7 +293,7 @@ ipcMain.handle("quotes:auto-save", async (_event, { filename, data }) => {
     }
 });
 
-/** Delete a quote by filename */
+
 ipcMain.handle("quotes:delete", async (_event, fileName) => {
     try {
         if (!fileName) throw new Error("fileName is required");
@@ -307,7 +307,7 @@ ipcMain.handle("quotes:delete", async (_event, fileName) => {
     }
 });
 
-/** Check if a quote exists */
+
 ipcMain.handle("quotes:exists", async (_event, fileName) => {
     try {
         if (!fileName) throw new Error("fileName is required");
@@ -319,7 +319,7 @@ ipcMain.handle("quotes:exists", async (_event, fileName) => {
     }
 });
 
-/** Rename a quote (keeps it within jsonDir) */
+
 ipcMain.handle("quotes:rename", async (_event, { oldName, newName }) => {
     try {
         if (!oldName || !newName) throw new Error("oldName and newName are required");
@@ -336,7 +336,7 @@ ipcMain.handle("quotes:rename", async (_event, { oldName, newName }) => {
     }
 });
 
-/** Prompt user with Save Dialog to choose a path for exporting a JSON */
+
 ipcMain.handle("quotes:choose-save-path", async (_event, defaultName) => {
     const defaultSafe = withJsonExtension(sanitizeFilename(defaultName || "preventivo"));
     const result = await dialog.showSaveDialog({
@@ -349,7 +349,7 @@ ipcMain.handle("quotes:choose-save-path", async (_event, defaultName) => {
         : { ok: true, path: result.filePath };
 });
 
-/** Export JSON content directly to a specified path (outside jsonDir) */
+
 ipcMain.handle("quotes:export-to-path", async (_event, { targetPath, data }) => {
     try {
         if (!targetPath) throw new Error("targetPath is required");
@@ -397,7 +397,7 @@ ipcMain.handle("quotes:search", async (_event, searchQuery) => {
                         const s = String(v).toLowerCase();
                         if (s.includes(q)) {
                             matchedFields.push(k);
-                            scoreHit(score, k, 3); // general fields weighted higher
+                            scoreHit(score, k, 3);
                         }
                     }
                 });
@@ -427,8 +427,8 @@ ipcMain.handle("quotes:search", async (_event, searchQuery) => {
                             licensePlate: general.licensePlate ?? null,
                             model: general.model ?? null,
                             year: general.year ?? null,
-                            chassis: general.chassis ?? null,       // ADDED to search preview
-                            insurance: general.insurance ?? null,   // ADDED to search preview
+                            chassis: general.chassis ?? null,
+                            insurance: general.insurance ?? null,
                             quoteDate: general.quoteDate ?? null,
                             totalWithIva: totals?.totalWithIva ?? null,
                         },

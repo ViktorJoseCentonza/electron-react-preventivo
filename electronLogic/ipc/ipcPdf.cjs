@@ -2,7 +2,7 @@ const { app, ipcMain, dialog, BrowserWindow } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
-// --- utils ---------------------------------------------------------
+
 function ensureDir(dirPath) {
     try {
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
@@ -39,7 +39,7 @@ function safeHours(h) {
     return `${str} h`;
 }
 
-// For hours / percentages: up to 2 decimals, but no trailing .00 if integer
+
 function safeNumber2(n) {
     const num = Number(n);
     if (!Number.isFinite(num)) return "";
@@ -47,20 +47,20 @@ function safeNumber2(n) {
     return String(rounded);
 }
 
-// Resolve logo path for dev + prod
+
 function resolveLogoPath() {
     const appRoot = app.getAppPath();
     const candidates = [];
 
     if (!app.isPackaged) {
-        // Dev: run with `electron .`, project root is appRoot
+
         candidates.push(path.join(appRoot, "src", "assets", "logo_carrozzeria.png"));
     }
 
-    // Fallbacks: if you ever move or copy it differently
+
     candidates.push(path.join(appRoot, "assets", "logo_carrozzeria.png"));
 
-    // Prod: electron-builder extraResources -> process.resourcesPath
+
     if (process.resourcesPath) {
         candidates.push(path.join(process.resourcesPath, "assets", "logo_carrozzeria.png"));
     }
@@ -76,9 +76,9 @@ function resolveLogoPath() {
     return null;
 }
 
-// -------------------------------
-// Choose PDF save path
-// -------------------------------
+
+
+
 ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
     try {
         let defaultPath = "quote.pdf";
@@ -86,14 +86,14 @@ ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
         if (typeof defaultName === "string" && defaultName.trim()) {
             const trimmed = defaultName.trim();
 
-            // Heuristic: if it looks like a path, preserve its directory
+
             const looksLikePath =
                 trimmed.includes(path.sep) || trimmed.includes("/") || trimmed.includes("\\");
 
             if (looksLikePath) {
                 const dir = path.dirname(trimmed);
                 const base = path.basename(trimmed);
-                const nameWithoutExt = base.replace(/\.[^/.]+$/, ""); // strip last extension
+                const nameWithoutExt = base.replace(/\.[^/.]+$/, "");
                 const pdfName = `${nameWithoutExt || base}.pdf`;
                 defaultPath = path.join(dir, pdfName);
             } else {
@@ -120,24 +120,24 @@ ipcMain.handle("quotes:choose-pdf-save-path", async (_event, defaultName) => {
     }
 });
 
-// -------------------------------
-// Export to PDF via Chromium printToPDF
-// -------------------------------
-ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
+
+
+
+ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data, anonymize }) => {
     let win;
     console.time("[ipcPdf] export-to-pdf");
     try {
-        console.log("[ipcPdf] START export-to-pdf");
+        console.log("[ipcPdf] START export-to-pdf, anonymize:", !!anonymize);
         if (!targetPath) throw new Error("targetPath is required");
         if (!data || typeof data !== "object") {
             throw new Error("data is required and must be an object");
         }
 
-        // Resolve template & css
+
         const templatePath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.html");
         const cssPath = path.join(__dirname, "..", "pdfTemplate", "pdfTemplate.css");
 
-        // Resolve logo
+
         const logoPath = resolveLogoPath();
 
         console.log("[ipcPdf] templatePath:", templatePath);
@@ -146,7 +146,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         let htmlContent = readText(templatePath);
         const cssContent = readText(cssPath);
 
-        // Inline CSS
+
         const linkRegex = /<link[^>]+href=["']file:\/\/\{\{cssPath\}\}["'][^>]*>\s*/i;
         if (linkRegex.test(htmlContent)) {
             htmlContent = htmlContent.replace(linkRegex, `<style>\n${cssContent}\n</style>\n`);
@@ -157,7 +157,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             );
         }
 
-        // Inline logo as data URL (works on data: page)
+
         let logoDataUrl = "";
         if (logoPath) {
             try {
@@ -170,7 +170,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         }
         htmlContent = htmlContent.replace(/\{\{logoDataUrl\}\}/g, safe(logoDataUrl));
 
-        // Inject data
+
         const g = data.general || data.quote || {};
         const items = Array.isArray(data.items) ? data.items : [];
         const comp = data.complementary || {};
@@ -185,7 +185,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             .replace(/\{\{insurance\}\}/g, safe(g.insurance))
             .replace(/\{\{quoteDate\}\}/g, safe(g.quoteDate));
 
-        // Items rows
+
         let itemsHtml = "";
         for (const it of items) {
             itemsHtml += `
@@ -203,7 +203,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         }
         htmlContent = htmlContent.replace(/\{\{items\}\}/g, itemsHtml);
 
-        // === Complementary: fill known rows directly into placeholders ===
+
         function fillComplementaryRow(prefix, obj) {
             let quantity = "";
             let price = "";
@@ -216,10 +216,10 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             if (obj && typeof obj === "object") {
                 quantity = safeNumber2(obj.quantity);
                 price = safeMoney(obj.price);
-                tax = safeNumber2(obj.tax); // IVA %
+                tax = safeNumber2(obj.tax);
                 total = safeMoney(obj.total);
                 taxable = safeMoney(obj.taxable);
-                taxAmount = safeMoney(obj.taxAmount); // Imposta
+                taxAmount = safeMoney(obj.taxAmount);
                 totalWithTax = safeMoney(obj.totalWithTax);
             }
 
@@ -239,26 +239,38 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             }
         }
 
-        // Map JSON → rows
+
         fillComplementaryRow("partsTotal", comp.partsTotal);
         fillComplementaryRow("parts", comp.parts);
         fillComplementaryRow("bodywork", comp.bodywork);
         fillComplementaryRow("mechanics", comp.mechanics);
         fillComplementaryRow("consumables", comp.consumables);
 
-        // Totals
+
         htmlContent = htmlContent
             .replace(/\{\{subtotal\}\}/g, safeMoney(totals.subtotal))
             .replace(/\{\{iva\}\}/g, safeMoney(totals.iva))
             .replace(/\{\{totalWithIva\}\}/g, safeMoney(totals.totalWithIva));
 
-        // Hidden window and load
+
+        if (anonymize) {
+            htmlContent = htmlContent
+                .replace(/\s*<div class="identity">[\s\S]*?<\/div>/i, "")
+                .replace(/\s*<div class="brand">[\s\S]*?<\/div>/i, "");
+            htmlContent = htmlContent.replace(
+                /<div class="page-hint">[\s\S]*?<\/div>/i,
+                '<div class="page-hint">Preventivo</div>'
+            );
+        }
+
+
+
         win = new BrowserWindow({
             show: false,
             webPreferences: { nodeIntegration: false, contextIsolation: true },
         });
 
-        // Robust load/error hooks + watchdog
+
         const loadTimeoutMs = 15000;
         const printTimeoutMs = 20000;
 
@@ -301,7 +313,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         clearTimeout(loadTimer);
         console.log("[ipcPdf] did-finish-load");
 
-        // Fonts readiness (best-effort)
+
         try {
             await win.webContents.executeJavaScript(
                 `(async () => { try { if (document.fonts && document.fonts.ready) { await document.fonts.ready; } } catch(e){} return true; })();`,
@@ -309,7 +321,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
             );
         } catch { }
 
-        // Print to PDF with watchdog
+
         let printTimer;
         const printWatchdog = new Promise((_, reject) => {
             printTimer = setTimeout(() => {
@@ -331,7 +343,7 @@ ipcMain.handle("quotes:export-to-pdf", async (_event, { targetPath, data }) => {
         const byteLen = Buffer.isBuffer(pdfBuffer) ? pdfBuffer.length : pdfBuffer?.byteLength || 0;
         if (!pdfBuffer || byteLen === 0) throw new Error("printToPDF returned an empty buffer");
 
-        // Write atomically
+
         writeFileAtomic(
             targetPath,
             Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer)

@@ -12,7 +12,7 @@
 .titleWrapper {
     flex-shrink: 0;
     min-width: 0;
-    /* allow title to shrink for ellipsis */
+
 }
 
 .title {
@@ -30,10 +30,11 @@ nav {
     justify-content: center;
     gap: 0.75rem;
     flex: 1 1 auto;
-    /* allow nav to grow/shrink */
+
     min-width: 0;
     overflow-x: auto;
-    /* enable horizontal scroll on tiny screens */
+
+    padding-left: clamp(0rem, 5rem, 15vw);
 }
 
 nav::-webkit-scrollbar {
@@ -76,10 +77,10 @@ nav::-webkit-scrollbar-track {
     align-items: center;
     flex-shrink: 0;
     gap: 0.5rem;
-    /* spacing between search and toggle */
+
 }
 
-/* Search wrapper grows but respects toggle space */
+
 .searchWrapper {
     flex: 1 1 auto;
     min-width: 0;
@@ -90,12 +91,12 @@ nav::-webkit-scrollbar-track {
     max-width: 300px;
 }
 
-/* Make toggle a fixed size in flex to prevent overlap */
+
 .controls> :last-child {
     margin-left: 2rem;
 }
 
-/* Responsive tweaks */
+
 @media (max-width: 1024px) {
     .title {
         font-size: 1.35rem;
@@ -114,6 +115,8 @@ nav::-webkit-scrollbar-track {
     nav {
         justify-content: start;
         gap: 0.5rem;
+
+        padding-left: 0;
     }
 }
 
@@ -131,9 +134,11 @@ nav::-webkit-scrollbar-track {
     nav {
         justify-content: start;
         flex-wrap: nowrap;
-        /* horizontal scroll instead of wrapping */
+
         overflow-x: auto;
         gap: 0.5rem;
+        padding-left: 0;
+
     }
 
     .navLink {
@@ -143,10 +148,10 @@ nav::-webkit-scrollbar-track {
 
     .controls {
         justify-content: flex-start;
-        /* align search + toggle together */
+
         width: 100%;
         gap: 0.5rem;
-        /* spacing between search and toggle */
+
     }
 
     .searchWrapper {
@@ -154,7 +159,7 @@ nav::-webkit-scrollbar-track {
         min-width: 0;
     }
 
-    /* Toggle stays fixed size even on tiny screens */
+
     .controls> :last-child {
         flex: 0 0 auto;
     }

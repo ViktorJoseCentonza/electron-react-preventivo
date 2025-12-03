@@ -12,11 +12,8 @@ export default function QuoteSave() {
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [isError, setIsError] = useState(false);
-
-    // Local builder: shape the JSON exactly as QuoteEditorPage expects when reading
     const buildExportData = () => {
         return {
-            // `quote` section (general data)
             quote: {
                 client: quote.general?.client ?? "",
                 licensePlate: quote.general?.licensePlate ?? "",
@@ -26,9 +23,7 @@ export default function QuoteSave() {
                 insurance: quote.general?.insurance ?? "",
                 quoteDate: quote.general?.quoteDate ?? "",
             },
-            // items array (already without any ghost row)
             items: Array.isArray(quote.items) ? quote.items : [],
-            // complementary groups + partsTotal
             complementary: {
                 parts: { ...(quote.complementary?.parts ?? {}) },
                 bodywork: { ...(quote.complementary?.bodywork ?? {}) },
@@ -36,7 +31,6 @@ export default function QuoteSave() {
                 consumables: { ...(quote.complementary?.consumables ?? {}) },
                 partsTotal: { ...(quote.complementary?.partsTotal ?? {}) },
             },
-            // final totals (use current computed ones)
             totals: {
                 subtotal: quote.totals?.subtotal ?? 0,
                 iva: quote.totals?.iva ?? 0,
@@ -76,7 +70,6 @@ export default function QuoteSave() {
             const filename = generateFilename();
 
             if (manual) {
-                // Manual "Save As"
                 const dialogResult = await window.api.quotes.chooseSavePath(filename);
                 if (!dialogResult.ok) {
                     setMessage(labels.quote_save_canceled);
@@ -89,7 +82,6 @@ export default function QuoteSave() {
                 if (!writeResult.ok) throw new Error(writeResult.error);
                 markSaved(dialogResult.path);
             } else {
-                // Autosave to default folder
                 const result = await window.api.quotes.autosave({ filename, data });
                 if (!result.ok) throw new Error(result.error);
                 markSaved(filename);

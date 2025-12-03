@@ -27,7 +27,7 @@
     left: 0;
     width: 100%;
     max-width: 300px;
-    /* match input max-width */
+
     overflow-y: auto;
     background-color: var(--color-header);
     border: 1px solid var(--color-border);
@@ -60,11 +60,11 @@
     pointer-events: auto;
 
     white-space: nowrap;
-    /* Prevent wrapping */
+
     overflow: hidden;
-    /* Hide overflow */
+
     text-overflow: ellipsis;
-    /* Show ellipsis for long text */
+
 }
 
 .resultCard:last-child {

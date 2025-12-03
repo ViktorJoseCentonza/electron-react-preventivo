@@ -56,11 +56,20 @@ export default {
     quote_save_error: "Error saving quote.",
     quote_save_canceled: "Save canceled.",
 
-    // PDF labels
+
     export_pdf: "Export PDF",
     export_pdf_manual: "Export PDF Manually",
     exporting: "Exporting...",
     pdf_exported: "PDF exported successfully!",
     pdf_export_error: "Error exporting PDF.",
-    pdf_export_canceled: "PDF export canceled."
+    pdf_export_canceled: "PDF export canceled.",
+
+
+    pdf_no_quote_data: "No quote data available.",
+    pdf_no_path_selected: "No path selected.",
+    pdf_save_dialog_slow: "Save dialog taking too long...",
+    pdf_generation_slow: "PDF generation taking longer than expected...",
+
+
+    pdf_anonymous_label: "anonymize"
 };

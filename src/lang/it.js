@@ -56,11 +56,20 @@ export default {
     quote_save_error: "Errore durante il salvataggio del preventivo.",
     quote_save_canceled: "Salvataggio annullato.",
 
-    // PDF labels
+
     export_pdf: "Esporta PDF",
     export_pdf_manual: "Esporta PDF Manualmente",
     exporting: "Esportazione...",
     pdf_exported: "PDF esportato con successo!",
     pdf_export_error: "Errore durante l'esportazione PDF.",
-    pdf_export_canceled: "Esportazione PDF annullata."
+    pdf_export_canceled: "Esportazione PDF annullata.",
+
+
+    pdf_no_quote_data: "Nessun dato di preventivo disponibile.",
+    pdf_no_path_selected: "Nessun percorso selezionato.",
+    pdf_save_dialog_slow: "La finestra di salvataggio sta impiegando troppo tempo...",
+    pdf_generation_slow: "La generazione del PDF sta richiedendo più tempo del previsto...",
+
+
+    pdf_anonymous_label: "anonimizza"
 };

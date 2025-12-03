@@ -22,7 +22,7 @@ export default function SearchComponent() {
     const inputRef = useRef(null);
     const navigate = useNavigate();
 
-    // Measure input width initially and on window resize
+
     useEffect(() => {
         const measure = () => {
             if (inputRef.current) setInputWidth(inputRef.current.offsetWidth);
@@ -32,7 +32,7 @@ export default function SearchComponent() {
         return () => window.removeEventListener("resize", measure);
     }, []);
 
-    // Debounced search via normalized API
+
     useEffect(() => {
         if (!query) {
             setResults([]);
@@ -59,7 +59,7 @@ export default function SearchComponent() {
         return () => clearTimeout(timeout);
     }, [query]);
 
-    // Format YYYY-MM-DD -> DD-MM-YYYY
+
     const formatIsoToDDMMYYYY = (iso) => {
         if (typeof iso !== "string") return iso;
         const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -68,7 +68,7 @@ export default function SearchComponent() {
         return `${d}-${m}-${y}`;
     };
 
-    // Highlight matches safely
+
     const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const highlightMatch = (value, matchedFields, key) => {
         if (!matchedFields?.includes(key)) return value || "";

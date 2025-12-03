@@ -8,14 +8,14 @@ const num = (v) => {
     if (v === "" || v == null) return 0;
     if (typeof v === "number") return Number.isNaN(v) ? 0 : v;
 
-    // Convert comma to dot for decimals
+
     const normalized = String(v).replace(",", ".").trim();
-    const n = new Decimal(normalized);  // Use Decimal for more precision and control
+    const n = new Decimal(normalized);
     return n.isNaN() ? 0 : n.toNumber();
 };
 
 export const recalculateQuote = (quote) => {
-    // Ensure structure exists
+
     quote.items = Array.isArray(quote.items) ? quote.items : [];
     const comp = quote.complementary || (quote.complementary = {});
 
@@ -25,14 +25,14 @@ export const recalculateQuote = (quote) => {
     comp.consumables = comp.consumables || { quantity: 0, price: 24, tax: 22, total: 0, taxable: 0, taxAmount: 0, totalWithTax: 0 };
     comp.partsTotal = comp.partsTotal || { total: 0, taxable: 0, tax: 22, taxAmount: 0, totalWithTax: 0 };
 
-    // 1) Per-item totals = quantity * price
+
     quote.items.forEach((item) => {
         const qty = new Decimal(num(item.quantity));
         const price = new Decimal(num(item.price));
         item.total = qty.mul(price).toNumber();
     });
 
-    // 2) Totale ricambi (sum of item subtotals)
+
     const partsSum = quote.items.reduce((acc, it) => acc.plus(num(it.total)), new Decimal(0));
     const partsTaxPct = new Decimal(num(comp.partsTotal.tax || 22));
     const partsTaxAmount = partsSum.mul(partsTaxPct).div(100);
@@ -42,7 +42,7 @@ export const recalculateQuote = (quote) => {
     comp.partsTotal.taxAmount = partsTaxAmount.toNumber();
     comp.partsTotal.totalWithTax = partsSum.plus(partsTaxAmount).toNumber();
 
-    // 3) Auto-qty for complementary rows
+
     let bodyQty = new Decimal(0);
     let mechQty = new Decimal(0);
     let consQty = new Decimal(0);
@@ -53,16 +53,16 @@ export const recalculateQuote = (quote) => {
         const ve = new Decimal(num(it.VE));
         const me = new Decimal(num(it.ME));
 
-        bodyQty = bodyQty.plus(sr.plus(la).plus(ve)); // SR + LA + VE
-        mechQty = mechQty.plus(me);                   // ME
-        consQty = consQty.plus(ve);                   // VE
+        bodyQty = bodyQty.plus(sr.plus(la).plus(ve));
+        mechQty = mechQty.plus(me);
+        consQty = consQty.plus(ve);
     });
 
     comp.bodywork.quantity = bodyQty.toNumber();
     comp.mechanics.quantity = mechQty.toNumber();
     comp.consumables.quantity = consQty.toNumber();
 
-    // 4) Compute complementary rows
+
     const computeRow = (row) => {
         const qty = new Decimal(num(row.quantity));
         const price = new Decimal(num(row.price));
@@ -83,7 +83,7 @@ export const recalculateQuote = (quote) => {
     computeRow(comp.mechanics);
     computeRow(comp.consumables);
 
-    // 5) Totale preventivo
+
     const subtotal = new Decimal(num(comp.partsTotal.total))
         .plus(num(comp.parts.total))
         .plus(num(comp.bodywork.total))

@@ -12,7 +12,7 @@ function App() {
           <Route path="/quote" element={<QuoteEditorPage />} />
           <Route path="/quote/edit/:fileName" element={<QuoteEditorPage />} />
 
-          {/* Redirect any unknown route to Home */}
+          { }
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </DefaultLayout>
