@@ -22,7 +22,6 @@ export default function SearchComponent() {
     const inputRef = useRef(null);
     const navigate = useNavigate();
 
-
     useEffect(() => {
         const measure = () => {
             if (inputRef.current) setInputWidth(inputRef.current.offsetWidth);
@@ -31,7 +30,6 @@ export default function SearchComponent() {
         window.addEventListener("resize", measure);
         return () => window.removeEventListener("resize", measure);
     }, []);
-
 
     useEffect(() => {
         if (!query) {
@@ -59,7 +57,6 @@ export default function SearchComponent() {
         return () => clearTimeout(timeout);
     }, [query]);
 
-
     const formatIsoToDDMMYYYY = (iso) => {
         if (typeof iso !== "string") return iso;
         const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -68,7 +65,6 @@ export default function SearchComponent() {
         return `${d}-${m}-${y}`;
     };
 
-
     const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const highlightMatch = (value, matchedFields, key) => {
         if (!matchedFields?.includes(key)) return value || "";
@@ -76,9 +72,12 @@ export default function SearchComponent() {
         if (!safe) return value || "";
         const regex = new RegExp(`(${safe})`, "gi");
         return value
-            ? value.toString().split(regex).map((part, i) =>
-                regex.test(part) ? <mark key={i}>{part}</mark> : part
-            )
+            ? value
+                .toString()
+                .split(regex)
+                .map((part, i) =>
+                    regex.test(part) ? <mark key={i}>{part}</mark> : part
+                )
             : "";
     };
 
@@ -92,6 +91,7 @@ export default function SearchComponent() {
         if (!fileName) return;
         navigate(`/quote/edit/${fileName}`);
         setResults([]);
+        setQuery("");
     };
 
     return (
@@ -106,7 +106,10 @@ export default function SearchComponent() {
             />
 
             {results.length > 0 && (
-                <div className={styles.results} style={{ width: inputWidth }}>
+                <div
+                    className={`${styles.results} scrollable`}
+                    style={{ width: inputWidth || undefined }}
+                >
                     {results.map((res, idx) => (
                         <button
                             key={idx}
