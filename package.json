@@ -1,14 +1,18 @@
 {
-  "name": "electron-react-preventivo",
+  "name": "preventivo-app",
   "private": true,
-  "version": "0.0.0",
-  "main": "./electronLogic/main.cjs",
+  "version": "1.0.0",
+  "main": "electronLogic/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
     "dev:electron": "electron .",
-    "build": "vite build"
+    "build": "vite build",
+    "build:electron": "electron-builder",
+    "dist": "npm run build && npm run build:electron",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
@@ -24,10 +28,25 @@
     "@vitejs/plugin-react": "^5.0.4",
     "concurrently": "^9.2.1",
     "electron": "^39.1.1",
+    "electron-builder": "^25.0.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "vite": "^7.1.7"
+  },
+  "build": {
+    "appId": "it.preventivo.app",
+    "productName": "Preventivo App",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "icon": "src/assets/logo_carrozzeria.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "src/assets/logo_carrozzeria.icns"
+    }
   }
 }
