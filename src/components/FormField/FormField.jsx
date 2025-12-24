@@ -2,11 +2,6 @@ import Decimal from "decimal.js";
 import { forwardRef, useMemo } from "react";
 import styles from "./FormField.module.css";
 
-/**
- * FormField
- * - Handles comma decimals for numeric inputs.
- * - Supports an optional `symbol` rendered inside the input.
- */
 const FormField = forwardRef(function FormField(
     {
         label,
@@ -32,15 +27,12 @@ const FormField = forwardRef(function FormField(
     const isNumber = type === "number";
     const actualType = isNumber ? "text" : type;
 
+    const { onBlur: inputOnBlur, onChange: inputOnChange, tabIndex: inputTabIndex, ...restInputProps } = inputProps || {};
 
     const inputValue = useMemo(() => {
         if (value === null || value === undefined) return "";
-        if (isNumber) {
-            if (value === "") return "";
-            return String(value);
-        }
         return String(value);
-    }, [value, isNumber]);
+    }, [value]);
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && onEnter) {
@@ -49,11 +41,61 @@ const FormField = forwardRef(function FormField(
         }
     };
 
+    const sanitizeLive = (raw) => {
+        let s = String(raw).replace(/[^0-9.,]/g, "");
 
-    const normalizeNumber = (raw) => {
+        const lastDot = s.lastIndexOf(".");
+        const lastComma = s.lastIndexOf(",");
+        const lastSep = Math.max(lastDot, lastComma);
+
+        if (lastSep !== -1) {
+            const before = s.slice(0, lastSep).replace(/[.,]/g, "");
+            const after = s.slice(lastSep + 1).replace(/[.,]/g, "");
+
+            let intPart = before.replace(/^0+(?=\d)/, "");
+            if (intPart === "") intPart = "0";
+
+            return `${intPart},${after.slice(0, 2)}`;
+        }
+
+        s = s.replace(/[.,]/g, "");
+        s = s.replace(/^0+(?=\d)/, "");
+        return s;
+    };
+
+    const formatOnBlur = (raw) => {
+        let s = String(raw).replace(/[^0-9.,]/g, "");
+
+        const lastDot = s.lastIndexOf(".");
+        const lastComma = s.lastIndexOf(",");
+        const lastSep = Math.max(lastDot, lastComma);
+
+        if (lastSep !== -1) {
+            const before = s.slice(0, lastSep).replace(/[.,]/g, "");
+            const after = s.slice(lastSep + 1).replace(/[.,]/g, "");
+
+            let intPart = before.replace(/^0+(?=\d)/, "");
+            if (intPart === "") intPart = "0";
+
+            let decPart = after.replace(/[.,]/g, "").slice(0, 2);
+
+            if (decPart.length === 0) return intPart;
+
+            if (decPart.length === 1) decPart = `${decPart}0`;
+
+            if (decPart === "00") return intPart;
+
+            return `${intPart},${decPart}`;
+        }
+
+        s = s.replace(/[.,]/g, "");
+        s = s.replace(/^0+(?=\d)/, "");
+        return s;
+    };
+
+    const normalizeForDecimal = (raw) => {
         if (raw === "" || raw === null || raw === undefined) return "";
-
-        const normalized = String(raw).replace(",", ".");
+        const normalized = String(raw).replace(/,/g, ".");
         const n = new Decimal(normalized);
         return n.isNaN() ? "" : n.toString();
     };
@@ -62,23 +104,26 @@ const FormField = forwardRef(function FormField(
         let raw = e.target.value;
 
         if (isNumber) {
-
+            raw = sanitizeLive(raw);
             onChange?.(raw);
-        } else {
-            if (typeof maxLength === "number" && raw.length > maxLength) {
-                raw = raw.slice(0, maxLength);
-            }
-            onChange?.(raw);
+            inputOnChange?.(e);
+            return;
         }
+
+        if (typeof maxLength === "number" && raw.length > maxLength) {
+            raw = raw.slice(0, maxLength);
+        }
+        onChange?.(raw);
+        inputOnChange?.(e);
     };
 
-
     const handleBlur = (e) => {
-        let raw = e.target.value;
         if (isNumber) {
-            const normalized = normalizeNumber(raw);
-            onChange?.(normalized);
+            const formatted = formatOnBlur(e.target.value);
+            onChange?.(formatted);
+            normalizeForDecimal(formatted);
         }
+        inputOnBlur?.(e);
     };
 
     const inputEl = (
@@ -97,10 +142,10 @@ const FormField = forwardRef(function FormField(
             min={isNumber ? min : undefined}
             max={isNumber ? max : undefined}
             step={isNumber ? step : undefined}
-            tabIndex={skipTab ? -1 : inputProps.tabIndex ?? undefined}
+            tabIndex={skipTab ? -1 : inputTabIndex ?? undefined}
             className={`${styles.input} ${className || ""}`}
             style={style}
-            {...inputProps}
+            {...restInputProps}
         />
     );
 

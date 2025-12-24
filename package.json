@@ -45,8 +45,21 @@
       "icon": "src/assets/logo_carrozzeria.ico"
     },
     "mac": {
-      "target": "dmg",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
       "icon": "src/assets/logo_carrozzeria.icns"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "src/assets/logo_carrozzeria.png",
+        "to": "assets/logo_carrozzeria.png"
+      }
+    ]
   }
 }

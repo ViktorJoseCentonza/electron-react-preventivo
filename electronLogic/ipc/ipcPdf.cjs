@@ -49,24 +49,17 @@ function safeNumber2(n) {
 
 
 function resolveLogoPath() {
-    const appRoot = app.getAppPath();
     const candidates = [];
 
     if (!app.isPackaged) {
-
-        candidates.push(path.join(appRoot, "src", "assets", "logo_carrozzeria.png"));
-    }
-
-
-    candidates.push(path.join(appRoot, "assets", "logo_carrozzeria.png"));
-
-
-    if (process.resourcesPath) {
+        candidates.push(path.join(app.getAppPath(), "src", "assets", "logo_carrozzeria.png"));
+    } else {
         candidates.push(path.join(process.resourcesPath, "assets", "logo_carrozzeria.png"));
+        candidates.push(path.join(process.resourcesPath, "app.asar.unpacked", "assets", "logo_carrozzeria.png"));
     }
 
     for (const p of candidates) {
-        if (fs.existsSync(p)) {
+        if (p && fs.existsSync(p)) {
             console.log("[ipcPdf] Using logo:", p);
             return p;
         }
@@ -75,6 +68,7 @@ function resolveLogoPath() {
     console.warn("[ipcPdf] No logo found. Tried:", candidates);
     return null;
 }
+
 
 
 
